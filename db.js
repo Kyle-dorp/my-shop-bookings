@@ -83,6 +83,22 @@ async function initDB() {
       }
     }
 
+    const svcCheck = await client.query('SELECT id FROM services LIMIT 1');
+    if (svcCheck.rows.length === 0) {
+      const services = [
+        { name: 'Fade',          duration: 30, price: 25.00, order: 1 },
+        { name: 'Lineup',        duration: 30, price: 25.00, order: 2 },
+        { name: 'Trim',          duration: 30, price: 25.00, order: 3 },
+        { name: 'Custom Style',  duration: 60, price: 45.00, order: 4 },
+      ];
+      for (const s of services) {
+        await client.query(
+          'INSERT INTO services (name, duration_minutes, price, display_order) VALUES ($1, $2, $3, $4)',
+          [s.name, s.duration, s.price, s.order]
+        );
+      }
+    }
+
     console.log('Database ready');
   } finally {
     client.release();
