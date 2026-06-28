@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Book an Appointment</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+<div class="booking-app">
+
+  <header class="site-header">
+    <div class="shop-name" id="shopNameHeader">The Barbershop</div>
+    <div class="shop-tagline">Book your appointment online</div>
+  </header>
+
+  <main class="booking-container">
+
+    <!-- Step dots -->
+    <div class="step-indicators" id="stepIndicators">
+      <div class="step-dot active" data-step="1">1</div>
+      <div class="step-line"></div>
+      <div class="step-dot" data-step="2">2</div>
+      <div class="step-line"></div>
+      <div class="step-dot" data-step="3">3</div>
+      <div class="step-line"></div>
+      <div class="step-dot" data-step="4">4</div>
+    </div>
+
+    <!-- Step 1: Choose service -->
+    <section class="booking-step active" id="step1">
+      <h2 class="step-title">Choose Your Cut</h2>
+      <p class="step-subtitle">Select the service you'd like</p>
+      <div class="services-grid" id="servicesGrid">
+        <div class="loading-spinner">Loading services…</div>
+      </div>
+    </section>
+
+    <!-- Step 2: Choose date -->
+    <section class="booking-step" id="step2">
+      <h2 class="step-title">Pick a Date</h2>
+      <p class="step-subtitle">Choose when you'd like to come in</p>
+      <div class="date-picker-container">
+        <input type="date" id="datePicker" class="date-input">
+        <p class="date-hint">Bookings open up to 60 days in advance</p>
+      </div>
+      <div class="step-nav">
+        <button class="btn btn-secondary" onclick="goStep(1)">← Back</button>
+        <button class="btn btn-primary btn-grow" id="dateNextBtn" onclick="goStep(3)" disabled>Next →</button>
+      </div>
+    </section>
+
+    <!-- Step 3: Choose time -->
+    <section class="booking-step" id="step3">
+      <h2 class="step-title">Select a Time</h2>
+      <p class="step-subtitle" id="selectedDateDisplay"></p>
+      <div id="slotsContainer" class="slots-container">
+        <div class="loading-spinner">Finding open times…</div>
+      </div>
+      <div class="step-nav">
+        <button class="btn btn-secondary" onclick="goStep(2)">← Back</button>
+      </div>
+    </section>
+
+    <!-- Step 4: Contact info -->
+    <section class="booking-step" id="step4">
+      <h2 class="step-title">Your Info</h2>
+      <p class="step-subtitle">Just a couple quick details</p>
+      <form class="contact-form" id="contactForm" onsubmit="submitBooking(event)">
+        <div class="form-group">
+          <label for="customerName">Full Name *</label>
+          <input type="text" id="customerName" required autocomplete="name" placeholder="Jane Smith">
+        </div>
+        <div class="form-group">
+          <label for="customerPhone">Phone Number *</label>
+          <input type="tel" id="customerPhone" required autocomplete="tel" placeholder="(555) 123-4567">
+        </div>
+        <div class="form-group">
+          <label for="customerEmail">Email <span class="optional">(optional)</span></label>
+          <input type="email" id="customerEmail" autocomplete="email" placeholder="you@email.com">
+        </div>
+
+        <div class="booking-summary">
+          <h3>Booking Summary</h3>
+          <div class="summary-item"><span class="summary-label">Service</span><span class="summary-value" id="summaryService">—</span></div>
+          <div class="summary-item"><span class="summary-label">Date</span><span class="summary-value" id="summaryDate">—</span></div>
+          <div class="summary-item"><span class="summary-label">Time</span><span class="summary-value" id="summaryTime">—</span></div>
+          <div class="summary-item"><span class="summary-label">Duration</span><span class="summary-value" id="summaryDuration">—</span></div>
+        </div>
+
+        <div class="step-nav">
+          <button type="button" class="btn btn-secondary" onclick="goStep(3)">← Back</button>
+          <button type="submit" class="btn btn-primary btn-grow" id="submitBtn">Confirm Booking</button>
+        </div>
+      </form>
+    </section>
+
+    <!-- Success -->
+    <section class="booking-step" id="stepSuccess">
+      <div class="success-container">
+        <div class="success-icon">✓</div>
+        <h2>You're Booked!</h2>
+        <p class="success-text">We'll see you soon. Screenshot this for your records.</p>
+        <div class="confirmation-details" id="confirmationDetails"></div>
+        <p class="cancel-note">Need to cancel or reschedule? Give us a call.</p>
+        <button class="btn btn-primary" onclick="resetBooking()">Book Another</button>
+      </div>
+    </section>
+
+  </main>
+</div>
+<script src="/js/booking.js"></script>
+</body>
+</html>

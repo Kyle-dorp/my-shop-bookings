@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin — Scheduler</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body class="admin-body">
+
+<!-- ── Login ─────────────────────────────────────────────────────── -->
+<div id="loginPage" class="login-page" style="display:none">
+  <div class="login-box">
+    <div class="logo">&#9986; Admin</div>
+    <p>Scheduler dashboard</p>
+    <form onsubmit="doLogin(event)">
+      <input type="password" id="loginPw" placeholder="Password" autocomplete="current-password" required>
+      <p id="loginErr" class="error-msg" style="display:none;margin-top:0"></p>
+      <button type="submit" class="btn btn-primary btn-block">Sign In</button>
+    </form>
+  </div>
+</div>
+
+<!-- ── Admin shell ─────────────────────────────────────────────── -->
+<div id="adminShell" class="admin-shell" style="display:none">
+
+  <div class="admin-topbar">
+    <span class="brand">&#9986; Scheduler</span>
+    <button class="logout-btn" onclick="doLogout()">Log out</button>
+  </div>
+
+  <div class="admin-tabs">
+    <button class="admin-tab" data-tab="today"        onclick="switchTab('today')">Today</button>
+    <button class="admin-tab" data-tab="appointments" onclick="switchTab('appointments')">Appointments</button>
+    <button class="admin-tab" data-tab="services"     onclick="switchTab('services')">Services</button>
+    <button class="admin-tab" data-tab="hours"        onclick="switchTab('hours')">Hours</button>
+    <button class="admin-tab" data-tab="account"      onclick="switchTab('account')">Account</button>
+  </div>
+
+  <div class="admin-content">
+
+    <!-- Today -->
+    <div class="admin-section" id="sec-today">
+      <div class="admin-section-header">
+        <h2 id="todayDate">Today</h2>
+        <button class="btn btn-sm btn-secondary" onclick="loadToday()">↻ Refresh</button>
+      </div>
+
+      <div class="stat-cards">
+        <div class="stat-card">
+          <div class="stat-number" id="statConfirmed">—</div>
+          <div class="stat-label">Confirmed</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-number" id="statCompleted">—</div>
+          <div class="stat-label">Completed</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-number" id="statCancelled">—</div>
+          <div class="stat-label">Cancelled</div>
+        </div>
+      </div>
+
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th>Customer</th>
+              <th>Service</th>
+              <th>Time</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="todayBody">
+            <tr><td colspan="5" class="loading-spinner">Loading…</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Appointments -->
+    <div class="admin-section" id="sec-appointments">
+      <div class="admin-section-header">
+        <h2>Appointments</h2>
+      </div>
+      <div class="filter-bar">
+        <input type="date" id="apptDateFilter" onchange="filterAppointments()"
+               title="Filter by date — clear to show all upcoming">
+        <button class="btn btn-sm btn-secondary" onclick="document.getElementById('apptDateFilter').value=''; loadAppointments()">Show All Upcoming</button>
+      </div>
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Customer</th>
+              <th>Service</th>
+              <th>Time</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="apptBody">
+            <tr><td colspan="6" class="loading-spinner">Loading…</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Services -->
+    <div class="admin-section" id="sec-services">
+      <div class="admin-section-header">
+        <h2>Services</h2>
+      </div>
+
+      <!-- Add service form -->
+      <div class="table-wrapper" style="margin-bottom:1.25rem;padding:1.1rem 1rem">
+        <form onsubmit="addService(event)" style="display:flex;gap:.75rem;flex-wrap:wrap;align-items:flex-end">
+          <div style="flex:1;min-width:160px">
+            <label style="font-size:.78rem;color:#888;display:block;margin-bottom:.3rem;font-weight:600;text-transform:uppercase;letter-spacing:.04em">Service Name</label>
+            <input id="newName" class="edit-input" placeholder="e.g. Fade" required style="width:100%">
+          </div>
+          <div>
+            <label style="font-size:.78rem;color:#888;display:block;margin-bottom:.3rem;font-weight:600;text-transform:uppercase;letter-spacing:.04em">Duration</label>
+            <select id="newDur" class="edit-input">
+              <option value="15">15 min</option>
+              <option value="30">30 min</option>
+              <option value="45" selected>45 min</option>
+              <option value="60">1 hr</option>
+              <option value="75">1h 15min</option>
+              <option value="90">1h 30min</option>
+              <option value="105">1h 45min</option>
+              <option value="120">2 hr</option>
+            </select>
+          </div>
+          <div>
+            <label style="font-size:.78rem;color:#888;display:block;margin-bottom:.3rem;font-weight:600;text-transform:uppercase;letter-spacing:.04em">Price (optional)</label>
+            <input id="newPrice" class="edit-input" type="number" min="0" step="0.01" placeholder="0.00" style="width:90px">
+          </div>
+          <button type="submit" class="btn btn-primary">+ Add Service</button>
+        </form>
+        <p id="addSvcErr" class="error-msg" style="margin-top:.6rem;display:none"></p>
+      </div>
+
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Duration</th>
+              <th>Price</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="servicesBody">
+            <tr><td colspan="5" class="loading-spinner">Loading…</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Hours -->
+    <div class="admin-section" id="sec-hours">
+      <div class="admin-section-header">
+        <h2>Business Hours</h2>
+        <button class="btn btn-primary" onclick="saveHours()">Save Hours</button>
+      </div>
+      <div class="table-wrapper">
+        <table class="hours-form">
+          <thead>
+            <tr>
+              <th>Day</th>
+              <th>Opens</th>
+              <th>Closes</th>
+              <th>Closed?</th>
+            </tr>
+          </thead>
+          <tbody id="hoursBody">
+            <tr><td colspan="4" class="loading-spinner">Loading…</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p style="font-size:.8rem;color:#888;margin-top:.75rem">
+        Appointment slots are generated every 15 minutes between open and close times.
+      </p>
+    </div>
+
+    <!-- Account -->
+    <div class="admin-section" id="sec-account">
+      <div class="admin-section-header">
+        <h2>Change Password</h2>
+      </div>
+      <div class="password-form">
+        <form onsubmit="changePassword(event)">
+          <div class="form-group">
+            <label>Current Password</label>
+            <input type="password" id="curPw" required autocomplete="current-password">
+          </div>
+          <div class="form-group">
+            <label>New Password <span style="color:#aaa;font-size:.8rem">(min 6 characters)</span></label>
+            <input type="password" id="newPw" required minlength="6" autocomplete="new-password">
+          </div>
+          <p id="pwErr" class="error-msg" style="display:block"></p>
+          <button type="submit" class="btn btn-primary">Update Password</button>
+        </form>
+      </div>
+    </div>
+
+  </div><!-- /admin-content -->
+</div><!-- /adminShell -->
+
+<script src="/js/admin.js"></script>
+</body>
+</html>
