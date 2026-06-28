@@ -64,7 +64,7 @@ router.get('/slots', async (req, res) => {
     const nowMins = now.getHours() * 60 + now.getMinutes() + 30; // 30-min booking buffer
 
     const slots = [];
-    for (let t = openMins; t + duration <= closeMins; t += 15) {
+    for (let t = openMins; t + duration <= closeMins; t += 30) {
       if (date === todayStr && t < nowMins) continue;
 
       const slotEnd = t + duration;
