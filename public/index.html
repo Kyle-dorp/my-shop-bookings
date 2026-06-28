@@ -27,6 +27,8 @@
       <div class="step-dot" data-step="3">3</div>
       <div class="step-line"></div>
       <div class="step-dot" data-step="4">4</div>
+      <div class="step-line" id="step5line" style="display:none"></div>
+      <div class="step-dot" id="step5dot" data-step="5" style="display:none">5</div>
     </div>
 
     <!-- Step 1: Choose service -->
@@ -100,6 +102,20 @@
       </form>
     </section>
 
+    <!-- Step 5: Payment -->
+    <section class="booking-step" id="step5">
+      <h2 class="step-title">Secure Deposit</h2>
+      <p class="step-subtitle" id="depositSubtitle">Pay your deposit to confirm</p>
+      <div class="payment-box">
+        <div id="stripePaymentElement"></div>
+        <p id="paymentErr" class="error-msg" style="display:none;margin-top:1rem"></p>
+        <div class="step-nav">
+          <button class="btn btn-secondary" onclick="goStep(4)">← Back</button>
+          <button class="btn btn-primary btn-grow" id="payBtn" onclick="confirmPayment()">Pay &amp; Confirm Booking</button>
+        </div>
+      </div>
+    </section>
+
     <!-- Success -->
     <section class="booking-step" id="stepSuccess">
       <div class="success-container">
@@ -114,6 +130,7 @@
 
   </main>
 </div>
+<script src="https://js.stripe.com/v3/"></script>
 <script src="/js/booking.js"></script>
 </body>
 </html>

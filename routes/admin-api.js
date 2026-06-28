@@ -204,17 +204,32 @@ router.get('/settings', async (req, res) => {
 });
 
 router.put('/settings', async (req, res) => {
-  const days = parseInt(req.body.max_booking_days);
-  if (isNaN(days) || days < 1 || days > 365) {
-    return res.status(400).json({ error: 'Must be between 1 and 365 days' });
-  }
+  const client = await pool.connect();
   try {
-    await pool.query(
-      `INSERT INTO settings (key,value) VALUES ('max_booking_days',$1)
-       ON CONFLICT (key) DO UPDATE SET value=$1`, [days]
+    await client.query('BEGIN');
+    const upsert = async (key, val) => client.query(
+      `INSERT INTO settings (key,value) VALUES ($1,$2) ON CONFLICT (key) DO UPDATE SET value=$2`,
+      [key, String(val)]
     );
+    if (req.body.max_booking_days !== undefined) {
+      const days = parseInt(req.body.max_booking_days);
+      if (isNaN(days) || days < 1 || days > 365) throw new Error('Days must be 1–365');
+      await upsert('max_booking_days', days);
+    }
+    if (req.body.deposit_required !== undefined) {
+      await upsert('deposit_required', req.body.deposit_required ? 'true' : 'false');
+    }
+    if (req.body.deposit_amount !== undefined) {
+      const amt = parseFloat(req.body.deposit_amount);
+      if (isNaN(amt) || amt < 0) throw new Error('Invalid deposit amount');
+      await upsert('deposit_amount', amt.toFixed(2));
+    }
+    await client.query('COMMIT');
     res.json({ success: true });
-  } catch (err) { res.status(500).json({ error: 'Server error' }); }
+  } catch (err) {
+    await client.query('ROLLBACK');
+    res.status(400).json({ error: err.message });
+  } finally { client.release(); }
 });
 
 // --- Change Password ---

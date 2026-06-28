@@ -1,6 +1,8 @@
 const express = require('express');
 const router = express.Router();
 const { pool } = require('../db');
+const stripeClient = process.env.STRIPE_SECRET_KEY
+  ? require('stripe')(process.env.STRIPE_SECRET_KEY) : null;
 
 function timeToMinutes(t) {
   const [h, m] = t.split(':').map(Number);
@@ -14,9 +16,28 @@ function minutesToTime(mins) {
 // GET /api/settings (public)
 router.get('/settings', async (req, res) => {
   try {
-    const r = await pool.query("SELECT value FROM settings WHERE key='max_booking_days'");
-    res.json({ max_booking_days: r.rows.length ? parseInt(r.rows[0].value) : 60 });
-  } catch { res.json({ max_booking_days: 60 }); }
+    const r = await pool.query('SELECT key, value FROM settings');
+    const s = { max_booking_days: 60, deposit_required: 'false', deposit_amount: '10' };
+    r.rows.forEach(row => s[row.key] = row.value);
+    s.stripe_publishable_key = process.env.STRIPE_PUBLISHABLE_KEY || null;
+    res.json(s);
+  } catch { res.json({ max_booking_days: 60, deposit_required: 'false', deposit_amount: '10' }); }
+});
+
+// POST /api/create-payment-intent
+router.post('/create-payment-intent', async (req, res) => {
+  if (!stripeClient) return res.status(503).json({ error: 'Payments not configured' });
+  const amount = parseFloat(req.body.amount);
+  if (!amount || amount <= 0) return res.status(400).json({ error: 'Invalid amount' });
+  try {
+    const pi = await stripeClient.paymentIntents.create({
+      amount: Math.round(amount * 100),
+      currency: 'usd',
+      description: req.body.description || 'Appointment deposit',
+      automatic_payment_methods: { enabled: true },
+    });
+    res.json({ client_secret: pi.client_secret });
+  } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
 // GET /api/services
@@ -135,10 +156,10 @@ router.post('/bookings', async (req, res) => {
 
     const result = await pool.query(
       `INSERT INTO appointments
-        (service_id, customer_name, customer_phone, customer_email, appointment_date, appointment_time, end_time)
-       VALUES ($1, $2, $3, $4, $5, $6, $7)
+        (service_id, customer_name, customer_phone, customer_email, appointment_date, appointment_time, end_time, payment_intent_id)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
        RETURNING id`,
-      [service_id, nameClean, phoneClean || null, customer_email || null, appointment_date, appointment_time, endTime]
+      [service_id, nameClean, phoneClean || null, customer_email || null, appointment_date, appointment_time, endTime, req.body.payment_intent_id || null]
     );
 
     res.json({ success: true, booking_id: result.rows[0].id });

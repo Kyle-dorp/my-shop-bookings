@@ -279,19 +279,30 @@ async function saveHours() {
 // ── Settings ──────────────────────────────────────────────────────────
 async function loadSettings() {
   const data = await api('GET', '/api/admin/settings');
-  if (data.max_booking_days) {
-    document.getElementById('maxBookingDays').value = data.max_booking_days;
-  }
+  if (data.max_booking_days) document.getElementById('maxBookingDays').value = data.max_booking_days;
+  const depReq = data.deposit_required === 'true';
+  document.getElementById('depositRequired').checked = depReq;
+  if (data.deposit_amount) document.getElementById('depositAmount').value = data.deposit_amount;
+  toggleDepositAmt();
+}
+
+function toggleDepositAmt() {
+  const checked = document.getElementById('depositRequired').checked;
+  document.getElementById('depositAmtGroup').style.display = checked ? 'block' : 'none';
 }
 
 async function saveSettings() {
-  const days = document.getElementById('maxBookingDays').value;
   const errEl = document.getElementById('settingsErr');
   errEl.style.display = 'none';
+  const body = {
+    max_booking_days: document.getElementById('maxBookingDays').value,
+    deposit_required: document.getElementById('depositRequired').checked,
+    deposit_amount:   document.getElementById('depositAmount').value || '0',
+  };
   const r = await fetch('/api/admin/settings', {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ max_booking_days: days }),
+    body: JSON.stringify(body),
   });
   const d = await r.json();
   if (r.ok) showToast('Settings saved!');

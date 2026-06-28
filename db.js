@@ -89,10 +89,18 @@ async function initDB() {
         value TEXT NOT NULL
       )
     `);
-    const settingsCheck = await client.query("SELECT key FROM settings WHERE key='max_booking_days'");
-    if (!settingsCheck.rows.length) {
-      await client.query("INSERT INTO settings (key, value) VALUES ('max_booking_days', '60')");
+    const defaults = { max_booking_days: '60', deposit_required: 'false', deposit_amount: '10' };
+    for (const [key, value] of Object.entries(defaults)) {
+      await client.query(
+        `INSERT INTO settings (key, value) VALUES ($1, $2) ON CONFLICT (key) DO NOTHING`,
+        [key, value]
+      );
     }
+
+    // Migration: add payment_intent_id to appointments if missing
+    await client.query(`
+      ALTER TABLE appointments ADD COLUMN IF NOT EXISTS payment_intent_id VARCHAR(100)
+    `);
 
     const svcCheck = await client.query('SELECT id FROM services LIMIT 1');
     if (svcCheck.rows.length === 0) {

@@ -299,6 +299,14 @@ body {
   color: var(--green); margin-bottom: 1rem; font-size: 0.875rem;
 }
 
+/* ── Payment box ── */
+.payment-box {
+  background: var(--white);
+  border-radius: var(--radius);
+  padding: 1.5rem;
+}
+#stripePaymentElement { min-height: 120px; }
+
 /* ── Calendar ── */
 .calendar-container {
   background: var(--white);

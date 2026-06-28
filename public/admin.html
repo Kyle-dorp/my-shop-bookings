@@ -199,7 +199,21 @@
         <div class="form-group">
           <label>Max days customers can book in advance</label>
           <input type="number" id="maxBookingDays" min="1" max="365" placeholder="60">
-          <p style="font-size:.8rem;color:#888;margin-top:.4rem">Default is 60 days (2 months). Set to 14 for 2 weeks, 365 for a full year.</p>
+            <p style="font-size:.8rem;color:#888;margin-top:.4rem">Default is 60 days (2 months). Set to 14 for 2 weeks, 365 for a full year.</p>
+        </div>
+        <div style="border-top:1px solid var(--border);margin:1.25rem 0;padding-top:1.25rem">
+          <h3 style="font-size:.95rem;margin-bottom:1rem">Deposit Collection (Stripe)</h3>
+          <div class="form-group">
+            <label class="closed-toggle" style="font-size:.95rem">
+              <input type="checkbox" id="depositRequired" onchange="toggleDepositAmt()">
+              Require deposit to confirm bookings
+            </label>
+            <p style="font-size:.8rem;color:#888;margin-top:.4rem;margin-left:22px">Customers pay this upfront by card. You collect the rest in person.</p>
+          </div>
+          <div class="form-group" id="depositAmtGroup" style="display:none">
+            <label>Deposit amount ($)</label>
+            <input type="number" id="depositAmount" min="1" step="0.01" placeholder="10.00" style="max-width:120px">
+          </div>
         </div>
         <p id="settingsErr" class="error-msg" style="display:none"></p>
         <button class="btn btn-primary" onclick="saveSettings()">Save Settings</button>
