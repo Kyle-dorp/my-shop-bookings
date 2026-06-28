@@ -83,6 +83,17 @@ async function initDB() {
       }
     }
 
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS settings (
+        key VARCHAR(50) PRIMARY KEY,
+        value TEXT NOT NULL
+      )
+    `);
+    const settingsCheck = await client.query("SELECT key FROM settings WHERE key='max_booking_days'");
+    if (!settingsCheck.rows.length) {
+      await client.query("INSERT INTO settings (key, value) VALUES ('max_booking_days', '60')");
+    }
+
     const svcCheck = await client.query('SELECT id FROM services LIMIT 1');
     if (svcCheck.rows.length === 0) {
       const services = [

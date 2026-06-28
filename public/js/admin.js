@@ -57,6 +57,7 @@ function switchTab(name) {
   else if (name === 'appointments') loadAppointments();
   else if (name === 'services') loadServices();
   else if (name === 'hours') loadHours();
+  else if (name === 'settings') loadSettings();
 }
 
 // ── Today ──────────────────────────────────────────────────────────────
@@ -273,6 +274,28 @@ async function saveHours() {
 
   if (r.ok) showToast('Hours saved!');
   else showToast('Save failed', 'error');
+}
+
+// ── Settings ──────────────────────────────────────────────────────────
+async function loadSettings() {
+  const data = await api('GET', '/api/admin/settings');
+  if (data.max_booking_days) {
+    document.getElementById('maxBookingDays').value = data.max_booking_days;
+  }
+}
+
+async function saveSettings() {
+  const days = document.getElementById('maxBookingDays').value;
+  const errEl = document.getElementById('settingsErr');
+  errEl.style.display = 'none';
+  const r = await fetch('/api/admin/settings', {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ max_booking_days: days }),
+  });
+  const d = await r.json();
+  if (r.ok) showToast('Settings saved!');
+  else { errEl.textContent = d.error; errEl.style.display = 'block'; }
 }
 
 // ── Password ──────────────────────────────────────────────────────────

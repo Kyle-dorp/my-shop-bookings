@@ -41,14 +41,17 @@
     <!-- Step 2: Choose date -->
     <section class="booking-step" id="step2">
       <h2 class="step-title">Pick a Date</h2>
-      <p class="step-subtitle">Choose when you'd like to come in</p>
-      <div class="date-picker-container">
-        <input type="date" id="datePicker" class="date-input">
-        <p class="date-hint">Bookings open up to 60 days in advance</p>
+      <p class="step-subtitle">Tap a day to continue</p>
+      <div class="calendar-container">
+        <div class="cal-header">
+          <button class="cal-nav" id="calPrev" onclick="changeMonth(-1)">&#8249;</button>
+          <span class="cal-title" id="calTitle"></span>
+          <button class="cal-nav" id="calNext" onclick="changeMonth(1)">&#8250;</button>
+        </div>
+        <div class="cal-grid" id="calGrid"></div>
       </div>
       <div class="step-nav">
         <button class="btn btn-secondary" onclick="goStep(1)">← Back</button>
-        <button class="btn btn-primary btn-grow" id="dateNextBtn" onclick="goStep(3)" disabled>Next →</button>
       </div>
     </section>
 

@@ -193,6 +193,30 @@ router.put('/hours', async (req, res) => {
   }
 });
 
+// --- Settings ---
+router.get('/settings', async (req, res) => {
+  try {
+    const r = await pool.query('SELECT key, value FROM settings');
+    const s = {};
+    r.rows.forEach(row => s[row.key] = row.value);
+    res.json(s);
+  } catch (err) { res.status(500).json({ error: 'Server error' }); }
+});
+
+router.put('/settings', async (req, res) => {
+  const days = parseInt(req.body.max_booking_days);
+  if (isNaN(days) || days < 1 || days > 365) {
+    return res.status(400).json({ error: 'Must be between 1 and 365 days' });
+  }
+  try {
+    await pool.query(
+      `INSERT INTO settings (key,value) VALUES ('max_booking_days',$1)
+       ON CONFLICT (key) DO UPDATE SET value=$1`, [days]
+    );
+    res.json({ success: true });
+  } catch (err) { res.status(500).json({ error: 'Server error' }); }
+});
+
 // --- Change Password ---
 router.put('/password', async (req, res) => {
   const { current_password, new_password } = req.body;

@@ -11,6 +11,14 @@ function minutesToTime(mins) {
   return `${String(Math.floor(mins / 60)).padStart(2, '0')}:${String(mins % 60).padStart(2, '0')}`;
 }
 
+// GET /api/settings (public)
+router.get('/settings', async (req, res) => {
+  try {
+    const r = await pool.query("SELECT value FROM settings WHERE key='max_booking_days'");
+    res.json({ max_booking_days: r.rows.length ? parseInt(r.rows[0].value) : 60 });
+  } catch { res.json({ max_booking_days: 60 }); }
+});
+
 // GET /api/services
 router.get('/services', async (req, res) => {
   try {
