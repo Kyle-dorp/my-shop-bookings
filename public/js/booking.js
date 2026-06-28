@@ -54,13 +54,18 @@ async function loadServices() {
       return;
     }
     grid.innerHTML = services.map(s => `
-      <div class="service-card" id="svc-${s.id}"
-           onclick="selectService(${s.id}, ${JSON.stringify(s.name)}, ${s.duration_minutes})">
+      <div class="service-card" id="svc-${s.id}">
         <div class="service-card-name">${s.name}</div>
         <div class="service-card-duration">${fmtDuration(s.duration_minutes)}</div>
         ${s.price ? `<div class="service-card-price">$${parseFloat(s.price).toFixed(2)}</div>` : ''}
       </div>
     `).join('');
+
+    services.forEach(s => {
+      document.getElementById(`svc-${s.id}`).addEventListener('click', () => {
+        selectService(s.id, s.name, s.duration_minutes);
+      });
+    });
   } catch {
     grid.innerHTML = '<p class="error-msg">Could not load services. Please refresh.</p>';
   }
