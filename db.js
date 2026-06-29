@@ -97,10 +97,29 @@ async function initDB() {
       );
     }
 
-    // Migration: add payment_intent_id to appointments if missing
+    // Migrations
     await client.query(`
       ALTER TABLE appointments ADD COLUMN IF NOT EXISTS payment_intent_id VARCHAR(100)
     `);
+
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS users (
+        id SERIAL PRIMARY KEY,
+        name VARCHAR(100),
+        email VARCHAR(100) UNIQUE,
+        phone VARCHAR(20),
+        password_hash VARCHAR(255),
+        created_at TIMESTAMP DEFAULT NOW()
+      )
+    `);
+
+    await client.query(`
+      ALTER TABLE appointments ADD COLUMN IF NOT EXISTS user_id INTEGER REFERENCES users(id)
+    `);
+
+    await client.query(`ALTER TABLE admin_users ADD COLUMN IF NOT EXISTS name VARCHAR(100) DEFAULT 'Admin'`);
+    await client.query(`ALTER TABLE admin_users ADD COLUMN IF NOT EXISTS email VARCHAR(100)`);
+    await client.query(`ALTER TABLE admin_users ADD COLUMN IF NOT EXISTS phone VARCHAR(20)`);
 
     const svcCheck = await client.query('SELECT id FROM services LIMIT 1');
     if (svcCheck.rows.length === 0) {

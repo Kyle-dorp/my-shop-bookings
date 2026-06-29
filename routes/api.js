@@ -156,10 +156,10 @@ router.post('/bookings', async (req, res) => {
 
     const result = await pool.query(
       `INSERT INTO appointments
-        (service_id, customer_name, customer_phone, customer_email, appointment_date, appointment_time, end_time, payment_intent_id)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+        (service_id, customer_name, customer_phone, customer_email, appointment_date, appointment_time, end_time, payment_intent_id, user_id)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
        RETURNING id`,
-      [service_id, nameClean, phoneClean || null, customer_email || null, appointment_date, appointment_time, endTime, req.body.payment_intent_id || null]
+      [service_id, nameClean, phoneClean || null, customer_email || null, appointment_date, appointment_time, endTime, req.body.payment_intent_id || null, req.session.userId || null]
     );
 
     res.json({ success: true, booking_id: result.rows[0].id });

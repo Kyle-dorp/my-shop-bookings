@@ -1,5 +1,6 @@
 /* Customer booking flow */
 const state = { service: null, date: null, time: null, customerInfo: null };
+let currentUser = null;
 
 let calYear, calMonth;
 let maxBookingDays = 60;
@@ -20,6 +21,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       const saved = JSON.parse(pending);
       Object.assign(state, saved);
       sessionStorage.removeItem('pendingBooking');
+      await fetchSettings();
       await createBooking(params.get('payment_intent'));
       return;
     }
@@ -28,8 +30,111 @@ document.addEventListener('DOMContentLoaded', async () => {
   await fetchSettings();
   loadServices();
   document.getElementById('customerPhone').addEventListener('input', formatPhone);
+  document.getElementById('regPhone').addEventListener('input', formatPhone);
+
+  // Check if already signed in — skip auth screen if so
+  await checkAuth();
 });
 
+// ── Auth ─────────────────────────────────────────────────────────────
+async function checkAuth() {
+  try {
+    const data = await fetch('/api/auth/me').then(r => r.json());
+    currentUser = data.user;
+  } catch {
+    currentUser = null;
+  }
+  if (currentUser) {
+    updateUserBar(currentUser);
+    goStep(1);
+  }
+  // else: stay on step 0 (already active by default)
+}
+
+function updateUserBar(user) {
+  const bar = document.getElementById('userBar');
+  if (!bar) return;
+  if (user) {
+    bar.innerHTML = `Hi, <strong>${esc(user.name)}</strong> &nbsp;·&nbsp; <button onclick="signOut()">Sign out</button>`;
+    bar.style.display = 'flex';
+  } else {
+    bar.style.display = 'none';
+  }
+}
+
+async function signOut() {
+  await fetch('/api/auth/logout', { method: 'POST' });
+  currentUser = null;
+  updateUserBar(null);
+  state.service = state.date = state.time = state.customerInfo = null;
+  goStep(0);
+}
+
+function authTab(tab) {
+  const isSignIn = tab === 'signin';
+  document.getElementById('tabSignIn').classList.toggle('active', isSignIn);
+  document.getElementById('tabRegister').classList.toggle('active', !isSignIn);
+  document.getElementById('authSignInPane').style.display = isSignIn ? '' : 'none';
+  document.getElementById('authRegisterPane').style.display = isSignIn ? 'none' : '';
+}
+
+function continueAsGuest() {
+  goStep(1);
+}
+
+async function doSignIn() {
+  const email    = document.getElementById('siEmail').value.trim();
+  const password = document.getElementById('siPw').value;
+  const errEl    = document.getElementById('siErr');
+  errEl.style.display = 'none';
+
+  if (!email || !password) { errEl.textContent = 'Email and password are required'; errEl.style.display = 'block'; return; }
+
+  try {
+    const r = await fetch('/api/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password }),
+    });
+    const d = await r.json();
+    if (!r.ok) { errEl.textContent = d.error; errEl.style.display = 'block'; return; }
+    currentUser = d.user;
+    updateUserBar(currentUser);
+    goStep(1);
+  } catch {
+    errEl.textContent = 'Network error. Please try again.';
+    errEl.style.display = 'block';
+  }
+}
+
+async function doRegister() {
+  const name     = document.getElementById('regName').value.trim();
+  const email    = document.getElementById('regEmail').value.trim();
+  const phone    = document.getElementById('regPhone').value.trim();
+  const password = document.getElementById('regPw').value;
+  const errEl    = document.getElementById('regErr');
+  errEl.style.display = 'none';
+
+  if (!name || !email || !password) { errEl.textContent = 'Name, email and password are required'; errEl.style.display = 'block'; return; }
+
+  try {
+    const r = await fetch('/api/auth/register', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, email, phone, password }),
+    });
+    const d = await r.json();
+    if (!r.ok) { errEl.textContent = d.error; errEl.style.display = 'block'; return; }
+    currentUser = d.user;
+    updateUserBar(currentUser);
+    goStep(1);
+  } catch {
+    errEl.textContent = 'Network error. Please try again.';
+    errEl.style.display = 'block';
+  }
+}
+
+// ── Settings ──────────────────────────────────────────────────────────
 async function fetchSettings() {
   try {
     const d = await fetch('/api/settings').then(r => r.json());
@@ -60,6 +165,7 @@ function fmtDuration(mins) {
   const h=Math.floor(mins/60), m=mins%60;
   return m?`${h}h ${m}min`:`${h} hr`;
 }
+function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 
 // ── Phone formatting ──────────────────────────────────────────────────
 function formatPhone(e) {
@@ -170,18 +276,43 @@ function selectSlot(time,el) {
 
 // ── Navigation ────────────────────────────────────────────────────────
 function goStep(n) {
+  const indicators = document.getElementById('stepIndicators');
+  indicators.style.display = (n === 0 || n === 'success') ? 'none' : 'flex';
+
   document.querySelectorAll('.booking-step').forEach(s=>s.classList.remove('active'));
-  document.querySelectorAll('.step-dot').forEach((dot,i)=>{
-    dot.classList.remove('active','done');
-    if(i+1<n) dot.classList.add('done');
-    else if(i+1===n) dot.classList.add('active');
-  });
-  const el=document.getElementById(n==='success'?'stepSuccess':`step${n}`);
+
+  if (n !== 0 && n !== 'success') {
+    document.querySelectorAll('.step-dot').forEach((dot,i)=>{
+      dot.classList.remove('active','done');
+      if(i+1<n) dot.classList.add('done');
+      else if(i+1===n) dot.classList.add('active');
+    });
+  }
+
+  const el = n==='success' ? document.getElementById('stepSuccess') : document.getElementById(`step${n}`);
   if(el) el.classList.add('active');
+
   if(n===2) initCalendar();
   if(n===3) loadSlots();
+  if(n===4) prefillContact();
   if(n===5) initStripePayment();
   window.scrollTo({top:0,behavior:'smooth'});
+}
+
+function prefillContact() {
+  if (!currentUser) return;
+  const nameEl  = document.getElementById('customerName');
+  const phoneEl = document.getElementById('customerPhone');
+  const emailEl = document.getElementById('customerEmail');
+  if (!nameEl.value  && currentUser.name)  nameEl.value  = currentUser.name;
+  if (!emailEl.value && currentUser.email) emailEl.value = currentUser.email;
+  if (!phoneEl.value && currentUser.phone) {
+    let v = currentUser.phone.replace(/\D/g,'').slice(0,10);
+    if (v.length>=7)      v=`(${v.slice(0,3)}) ${v.slice(3,6)}-${v.slice(6)}`;
+    else if (v.length>=4) v=`(${v.slice(0,3)}) ${v.slice(3)}`;
+    else if (v.length>0)  v=`(${v}`;
+    phoneEl.value = v;
+  }
 }
 
 // ── Booking form submit ───────────────────────────────────────────────
@@ -236,7 +367,6 @@ async function confirmPayment() {
   btn.disabled = true; btn.textContent = 'Processing…';
   errEl.style.display = 'none';
 
-  // Save state in case 3DS redirect is needed
   sessionStorage.setItem('pendingBooking', JSON.stringify({
     service: state.service, date: state.date,
     time: state.time, customerInfo: state.customerInfo,
@@ -259,7 +389,7 @@ async function confirmPayment() {
   }
 }
 
-// ── Create booking (called after payment or directly) ─────────────────
+// ── Create booking ────────────────────────────────────────────────────
 async function createBooking(paymentIntentId) {
   const info = state.customerInfo;
   const btn  = document.getElementById('submitBtn');
@@ -270,12 +400,12 @@ async function createBooking(paymentIntentId) {
       method: 'POST',
       headers: {'Content-Type':'application/json'},
       body: JSON.stringify({
-        service_id:       state.service.id,
-        customer_name:    info.name,
-        customer_phone:   info.phone,
-        customer_email:   info.email||null,
-        appointment_date: state.date,
-        appointment_time: state.time,
+        service_id:        state.service.id,
+        customer_name:     info.name,
+        customer_phone:    info.phone,
+        customer_email:    info.email||null,
+        appointment_date:  state.date,
+        appointment_time:  state.time,
         payment_intent_id: paymentIntentId||null,
       }),
     });
@@ -294,8 +424,8 @@ async function createBooking(paymentIntentId) {
 // ── Success ───────────────────────────────────────────────────────────
 function showSuccess(id, name) {
   document.querySelectorAll('.booking-step').forEach(s=>s.classList.remove('active'));
-  document.querySelectorAll('.step-dot').forEach(d=>{d.classList.remove('active');d.classList.add('done');});
   document.getElementById('stepSuccess').classList.add('active');
+  document.getElementById('stepIndicators').style.display = 'none';
   document.getElementById('confirmationDetails').innerHTML=`
     <div class="confirmation-row"><span class="label">Confirmation #</span><span class="value">#${String(id).padStart(5,'0')}</span></div>
     <div class="confirmation-row"><span class="label">Service</span><span class="value">${state.service.name}</span></div>
@@ -316,5 +446,6 @@ function showFormError(msg) {
 function resetBooking() {
   state.service=state.date=state.time=state.customerInfo=null;
   ['customerName','customerPhone','customerEmail'].forEach(id=>document.getElementById(id).value='');
-  goStep(1); loadServices();
+  loadServices();
+  goStep(currentUser ? 1 : 0);
 }

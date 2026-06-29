@@ -58,6 +58,7 @@ function switchTab(name) {
   else if (name === 'services') loadServices();
   else if (name === 'hours') loadHours();
   else if (name === 'settings') loadSettings();
+  else if (name === 'account') loadAccount();
 }
 
 // ── Today ──────────────────────────────────────────────────────────────
@@ -309,6 +310,32 @@ async function saveSettings() {
   else { errEl.textContent = d.error; errEl.style.display = 'block'; }
 }
 
+// ── Account / Profile ─────────────────────────────────────────────────
+async function loadAccount() {
+  try {
+    const data = await api('GET', '/api/admin/profile');
+    if (data.name)  document.getElementById('profileName').value  = data.name;
+    if (data.email) document.getElementById('profileEmail').value = data.email;
+    if (data.phone) document.getElementById('profilePhone').value = data.phone;
+  } catch {}
+}
+
+async function saveProfile() {
+  const name  = document.getElementById('profileName').value.trim();
+  const email = document.getElementById('profileEmail').value.trim();
+  const phone = document.getElementById('profilePhone').value.trim();
+  const errEl = document.getElementById('profileErr');
+  errEl.style.display = 'none';
+
+  const r = await fetch('/api/admin/profile', {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name, email, phone }),
+  });
+  if (r.ok) showToast('Profile saved!');
+  else { errEl.textContent = 'Save failed'; errEl.style.display = 'block'; }
+}
+
 // ── Password ──────────────────────────────────────────────────────────
 async function changePassword(e) {
   e.preventDefault();
@@ -316,6 +343,7 @@ async function changePassword(e) {
   const next  = document.getElementById('newPw').value;
   const errEl = document.getElementById('pwErr');
   errEl.textContent = '';
+  errEl.style.display = 'none';
 
   const r = await fetch('/api/admin/password', {
     method: 'PUT',
@@ -328,6 +356,7 @@ async function changePassword(e) {
     e.target.reset();
   } else {
     errEl.textContent = d.error || 'Failed';
+    errEl.style.display = 'block';
   }
 }
 

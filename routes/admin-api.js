@@ -232,6 +232,25 @@ router.put('/settings', async (req, res) => {
   } finally { client.release(); }
 });
 
+// --- Admin Profile ---
+router.get('/profile', async (req, res) => {
+  try {
+    const result = await pool.query('SELECT name, email, phone FROM admin_users LIMIT 1');
+    res.json(result.rows[0] || { name: 'Admin', email: '', phone: '' });
+  } catch { res.status(500).json({ error: 'Server error' }); }
+});
+
+router.put('/profile', async (req, res) => {
+  const { name, email, phone } = req.body;
+  try {
+    await pool.query(
+      'UPDATE admin_users SET name=$1, email=$2, phone=$3',
+      [name?.trim() || 'Admin', email || null, phone || null]
+    );
+    res.json({ success: true });
+  } catch { res.status(500).json({ error: 'Server error' }); }
+});
+
 // --- Change Password ---
 router.put('/password', async (req, res) => {
   const { current_password, new_password } = req.body;

@@ -352,6 +352,93 @@ body {
 .cal-day-today { font-weight: 700; color: var(--gold); }
 .cal-day-off  { color: #ccc; cursor: default; font-size: 0.8rem; }
 
+/* ── User bar (shown when signed in) ── */
+.user-bar {
+  display: none;
+  background: #fef9ef;
+  border-bottom: 1px solid #f0e4c0;
+  padding: .5rem 1rem;
+  font-size: .85rem;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  text-align: center;
+}
+.user-bar button {
+  background: none; border: none; cursor: pointer;
+  color: var(--muted); font-size: .82rem; font-family: inherit;
+  text-decoration: underline; padding: 0;
+}
+.user-bar button:hover { color: var(--red); }
+
+/* ── Auth card (step 0) ── */
+.auth-card {
+  background: var(--white);
+  border-radius: 14px;
+  padding: 2rem 1.75rem;
+  max-width: 400px;
+  margin: 0 auto;
+}
+.auth-card .step-title { text-align: center; }
+.auth-card .step-subtitle { text-align: center; }
+
+.google-btn {
+  width: 100%;
+  display: flex; align-items: center; justify-content: center; gap: .6rem;
+  padding: .75rem 1rem;
+  border: 2px solid var(--border);
+  border-radius: 8px;
+  background: #fafafa;
+  font-size: .9rem; font-family: inherit; font-weight: 500;
+  cursor: not-allowed;
+  color: #bbb;
+  margin-bottom: 0;
+}
+.google-soon {
+  font-size: .7rem; background: #ebebeb; color: #999;
+  padding: .15rem .5rem; border-radius: 99px; margin-left: auto;
+}
+.auth-divider {
+  display: flex; align-items: center; gap: .75rem;
+  margin: 1.1rem 0; color: #ccc; font-size: .8rem;
+}
+.auth-divider::before, .auth-divider::after {
+  content: ''; flex: 1; height: 1px; background: var(--border);
+}
+.auth-tabs {
+  display: flex;
+  border: 2px solid var(--border); border-radius: 8px;
+  overflow: hidden; margin-bottom: 1.2rem;
+}
+.auth-tab {
+  flex: 1; padding: .6rem;
+  border: none; background: none;
+  font-size: .875rem; font-family: inherit; font-weight: 500;
+  cursor: pointer; color: var(--muted);
+  transition: background .15s, color .15s;
+}
+.auth-tab.active { background: var(--gold); color: var(--white); }
+.manager-link {
+  text-align: center; margin-top: 1.25rem; font-size: .82rem;
+}
+.manager-link a { color: var(--muted); text-decoration: none; }
+.manager-link a:hover { color: var(--gold); }
+
+/* ── Admin profile section ── */
+.profile-section {
+  background: var(--white);
+  border-radius: var(--radius);
+  padding: 1.5rem;
+  max-width: 400px;
+  margin-bottom: 1.25rem;
+}
+.profile-section h3 {
+  font-size: .78rem; font-weight: 700;
+  text-transform: uppercase; letter-spacing: .05em;
+  color: var(--muted); margin-bottom: 1rem;
+  padding-bottom: .5rem; border-bottom: 1px solid var(--border);
+}
+
 /* ══════════════════════════════════════════
    ADMIN PANEL
 ══════════════════════════════════════════ */

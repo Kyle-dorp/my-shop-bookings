@@ -26,6 +26,7 @@ app.use(session({
 
 app.use('/api', require('./routes/api'));
 app.use('/api/admin', require('./routes/admin-api'));
+app.use('/api/auth', require('./routes/user-auth'));
 
 app.get('/admin', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'admin.html'));
