@@ -1,8 +1,16 @@
 function requireAdmin(req, res, next) {
-  if (!req.session || !req.session.isAdmin) {
-    return res.status(401).json({ error: 'Unauthorized' });
+  if (req.session?.shopId) {
+    req.shopId  = req.session.shopId;
+    req.adminId = req.session.adminId;
+    return next();
   }
-  next();
+  return res.status(401).json({ error: 'Unauthorized' });
 }
 
-module.exports = { requireAdmin };
+function requireSubscription(req, res, next) {
+  const status = req.session?.subscriptionStatus || 'active';
+  if (['active', 'trialing'].includes(status)) return next();
+  return res.status(402).json({ error: 'Subscription required', subscriptionStatus: status });
+}
+
+module.exports = { requireAdmin, requireSubscription };

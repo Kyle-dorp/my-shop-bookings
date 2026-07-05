@@ -1532,3 +1532,89 @@ body:not(.admin-body) .account-trigger {
 body:not(.admin-body) .account-trigger:hover {
   box-shadow: 0 0 16px rgba(200,169,110,.18);
 }
+
+/* ── Login tabs ──────────────────────────────────────────────────────── */
+.login-tabs {
+  display: flex;
+  gap: .25rem;
+  background: var(--surface);
+  border-radius: 8px;
+  padding: .25rem;
+  margin-bottom: 1.25rem;
+  border: 1px solid var(--border);
+}
+.login-tab {
+  flex: 1;
+  padding: .5rem .75rem;
+  border: none;
+  background: transparent;
+  border-radius: 6px;
+  font-size: .875rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all .18s;
+}
+.login-tab.active {
+  background: var(--gold);
+  color: #1a1007;
+}
+
+/* ── Slug field ──────────────────────────────────────────────────────── */
+.slug-field { margin-bottom: .75rem; }
+.slug-field label {
+  font-size: .78rem; color: #888; display: block;
+  margin-bottom: .3rem; font-weight: 600;
+  text-transform: uppercase; letter-spacing: .04em;
+}
+.slug-preview {
+  display: flex; align-items: center;
+  border: 1.5px solid var(--border); border-radius: 8px;
+  overflow: hidden; background: var(--input-bg);
+}
+.slug-base {
+  padding: .6rem .75rem; font-size: .78rem;
+  color: var(--text-muted); background: rgba(255,255,255,.03);
+  border-right: 1px solid var(--border); white-space: nowrap;
+}
+.slug-preview input {
+  flex: 1; border: none; background: transparent;
+  color: var(--text); padding: .6rem .75rem;
+  font-size: .875rem; outline: none;
+}
+
+/* ── Plan card ───────────────────────────────────────────────────────── */
+.plan-card {
+  background: rgba(200,169,110,.08);
+  border: 1.5px solid rgba(200,169,110,.3);
+  border-radius: 12px;
+  padding: 1.25rem;
+  margin: 1rem 0 1.25rem;
+  text-align: center;
+}
+.plan-name {
+  font-size: .78rem; font-weight: 700;
+  text-transform: uppercase; letter-spacing: .08em;
+  color: var(--gold); margin-bottom: .4rem;
+}
+.plan-price {
+  font-size: 2rem; font-weight: 800;
+  color: var(--text); line-height: 1; margin-bottom: .75rem;
+}
+.plan-price span { font-size: 1rem; font-weight: 500; color: var(--text-muted); }
+.plan-features { list-style: none; padding: 0; margin: 0; text-align: left; }
+.plan-features li { padding: .3rem 0; font-size: .875rem; color: var(--text-muted); }
+.plan-features li::before { content: '✓ '; color: var(--gold); font-weight: 700; }
+
+/* ── Subscription status badge ───────────────────────────────────────── */
+.sub-badge {
+  display: inline-flex; align-items: center; gap: .3rem;
+  padding: .2rem .6rem; border-radius: 20px;
+  font-size: .78rem; font-weight: 700;
+  text-transform: uppercase; letter-spacing: .05em;
+}
+.sub-badge.active   { background: rgba(46,204,113,.15); color: #2ecc71; }
+.sub-badge.trialing { background: rgba(200,169,110,.15); color: var(--gold); }
+.sub-badge.inactive, .sub-badge.cancelled, .sub-badge.past_due {
+  background: rgba(231,76,60,.12); color: #e74c3c;
+}

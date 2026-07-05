@@ -6,7 +6,7 @@
   <title>Admin — Scheduler</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/css/style.css?v=7">
+  <link rel="stylesheet" href="/css/style.css?v=8">
 </head>
 <body class="admin-body">
 
@@ -14,12 +14,60 @@
 <div id="loginPage" class="login-page" style="display:none">
   <div class="login-box">
     <div class="logo">&#9986; Admin</div>
-    <p>Scheduler dashboard</p>
-    <form onsubmit="doLogin(event)">
-      <input type="password" id="loginPw" placeholder="Password" autocomplete="current-password" required>
-      <p id="loginErr" class="error-msg" style="display:none;margin-top:0"></p>
-      <button type="submit" class="btn btn-primary btn-block">Sign In</button>
-    </form>
+    <div class="login-tabs">
+      <button class="login-tab active" id="tabSignIn" onclick="loginTab('signin')">Sign In</button>
+      <button class="login-tab" id="tabRegister" onclick="loginTab('register')">Create Account</button>
+    </div>
+
+    <!-- Sign in pane -->
+    <div id="signinPane">
+      <form onsubmit="doLogin(event)">
+        <input type="email" id="loginEmail" placeholder="Email (leave blank for legacy login)" autocomplete="email">
+        <input type="password" id="loginPw" placeholder="Password" autocomplete="current-password" required>
+        <p id="loginErr" class="error-msg" style="display:none;margin-top:0"></p>
+        <button type="submit" class="btn btn-primary btn-block">Sign In</button>
+      </form>
+    </div>
+
+    <!-- Register pane -->
+    <div id="registerPane" style="display:none">
+      <form onsubmit="doRegister(event)">
+        <input type="text" id="regShopName" placeholder="Shop Name (e.g. Cuts By Mike)" autocomplete="organization" required>
+        <input type="email" id="regEmail" placeholder="Email" autocomplete="email" required>
+        <input type="password" id="regPw" placeholder="Password (min 6 chars)" autocomplete="new-password" required minlength="6">
+        <div class="slug-field">
+          <label>Booking page URL</label>
+          <div class="slug-preview">
+            <span class="slug-base">yoursite.com/</span>
+            <input type="text" id="regSlug" placeholder="my-shop" maxlength="40" required pattern="[a-z0-9-]{2,40}">
+          </div>
+        </div>
+        <p id="registerErr" class="error-msg" style="display:none;margin-top:0"></p>
+        <button type="submit" class="btn btn-primary btn-block">Create Account</button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- ── Subscription required ──────────────────────────────────── -->
+<div id="subscriptionPage" class="login-page" style="display:none">
+  <div class="login-box">
+    <div class="logo">&#9986; Admin</div>
+    <h2 style="margin-bottom:.25rem;font-size:1.15rem;text-align:center">Activate Your Shop</h2>
+    <p style="color:#888;font-size:.875rem;margin-bottom:.75rem;text-align:center">Subscribe to unlock your full dashboard.</p>
+    <div class="plan-card">
+      <div class="plan-name">Pro Shop</div>
+      <div class="plan-price">$15<span>/month</span></div>
+      <ul class="plan-features">
+        <li>Your own booking page</li>
+        <li>Unlimited appointments</li>
+        <li>Services &amp; hours management</li>
+        <li>Stripe payment collection</li>
+        <li>Email confirmations</li>
+      </ul>
+    </div>
+    <button class="btn btn-primary btn-block" onclick="goSubscribe()">Subscribe — $15/month</button>
+    <button class="btn btn-secondary btn-block" style="margin-top:.5rem" onclick="doLogout()">Log out</button>
   </div>
 </div>
 
@@ -314,11 +362,33 @@
         </form>
       </div>
 
+      <!-- Billing -->
+      <div class="profile-card">
+        <div class="profile-card-title">
+          <span class="profile-card-icon">💳</span> Billing
+        </div>
+        <div class="profile-card-body">
+          <div class="profile-field-row">
+            <label class="profile-field-label">Plan</label>
+            <span style="color:var(--gold);font-weight:600">Pro Shop — $15/month</span>
+          </div>
+          <div class="profile-field-row">
+            <label class="profile-field-label">Status</label>
+            <span id="billingStatus">—</span>
+          </div>
+          <div class="profile-field-row">
+            <label class="profile-field-label">Booking URL</label>
+            <span id="billingBookingUrl" style="font-size:.85rem">—</span>
+          </div>
+          <button class="btn btn-secondary" onclick="openBillingPortal()" style="margin-top:.75rem">Manage Billing →</button>
+        </div>
+      </div>
+
     </div>
 
   </div><!-- /admin-content -->
 </div><!-- /adminShell -->
 
-<script src="/js/admin.js"></script>
+<script src="/js/admin.js?v=8"></script>
 </body>
 </html>

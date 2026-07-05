@@ -1,4 +1,9 @@
 /* Customer booking flow */
+const shopSlug = (() => {
+  const parts = window.location.pathname.split('/').filter(Boolean);
+  return (parts.length && parts[0] !== 'admin') ? parts[0] : '';
+})();
+
 const state = { service: null, date: null, time: null, customerInfo: null };
 let currentUser = null;
 let currentStep = null;
@@ -201,7 +206,7 @@ async function doRegister() {
 // ── Settings ──────────────────────────────────────────────────────────
 async function fetchSettings() {
   try {
-    const d = await fetch('/api/settings').then(r => r.json());
+    const d = await fetch(`/api/settings?shop=${shopSlug}`).then(r => r.json());
     maxBookingDays  = parseInt(d.max_booking_days) || 60;
     paymentMode     = d.payment_mode || (d.deposit_required === 'true' ? 'deposit' : 'in_person');
     depositRequired = paymentMode === 'deposit';
@@ -310,7 +315,7 @@ function changeMonth(dir) {
 async function loadServices() {
   const grid=document.getElementById('servicesGrid');
   try {
-    const services=await fetch('/api/services').then(r=>r.json());
+    const services=await fetch(`/api/services?shop=${shopSlug}`).then(r=>r.json());
     if(!services.length){ grid.innerHTML='<p class="no-slots-msg">No services available yet.</p>'; return; }
     grid.innerHTML=services.map(s=>`
       <div class="service-card" id="svc-${s.id}">
@@ -337,7 +342,7 @@ async function loadSlots() {
   container.innerHTML='<div class="loading-spinner">Finding open times…</div>';
   state.time=null;
   try {
-    const data=await fetch(`/api/slots?date=${state.date}&service_id=${state.service.id}`).then(r=>r.json());
+    const data=await fetch(`/api/slots?date=${state.date}&service_id=${state.service.id}&shop=${shopSlug}`).then(r=>r.json());
     if(!data.slots||!data.slots.length) {
       container.innerHTML=`<div class="no-slots-msg"><strong>${data.closed?'Closed this day.':'No openings this day.'}</strong><br><span style="font-size:.85rem">Pick a different date.</span></div>`;
       return;
@@ -490,7 +495,7 @@ async function confirmPayment() {
 
   const { error, paymentIntent } = await stripe.confirmPayment({
     elements: stripeElements,
-    confirmParams: { return_url: `${window.location.origin}/?payment_return=1` },
+    confirmParams: { return_url: `${window.location.origin}${window.location.pathname}?payment_return=1` },
     redirect: 'if_required',
   });
 
@@ -523,6 +528,7 @@ async function createBooking(paymentIntentId) {
         appointment_date:  state.date,
         appointment_time:  state.time,
         payment_intent_id: paymentIntentId||null,
+        shop_slug:         shopSlug||undefined,
       }),
     });
     const data = await r.json();

@@ -10,6 +10,33 @@ const PORT = process.env.PORT || 3000;
 
 app.set('trust proxy', 1);
 
+// Stripe webhook needs raw body — must be registered BEFORE express.json()
+app.post('/api/billing/webhook', express.raw({ type: 'application/json' }), async (req, res) => {
+  const stripeLib = process.env.STRIPE_SECRET_KEY ? require('stripe')(process.env.STRIPE_SECRET_KEY) : null;
+  if (!stripeLib) return res.status(503).end();
+  let event;
+  try {
+    event = process.env.STRIPE_WEBHOOK_SECRET
+      ? stripeLib.webhooks.constructEvent(req.body, req.headers['stripe-signature'], process.env.STRIPE_WEBHOOK_SECRET)
+      : JSON.parse(req.body.toString());
+  } catch (err) { console.error('Webhook signature error:', err.message); return res.status(400).end(); }
+  try {
+    const sub = event.data.object;
+    if (['customer.subscription.created','customer.subscription.updated'].includes(event.type)) {
+      await pool.query(
+        `UPDATE shops SET subscription_status=$1, stripe_subscription_id=$2 WHERE stripe_customer_id=$3`,
+        [sub.status, sub.id, sub.customer]
+      );
+    } else if (event.type === 'customer.subscription.deleted') {
+      await pool.query(
+        `UPDATE shops SET subscription_status='cancelled', stripe_subscription_id=NULL WHERE stripe_customer_id=$1`,
+        [sub.customer]
+      );
+    }
+  } catch (err) { console.error('Webhook processing error:', err); }
+  res.json({ received: true });
+});
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -44,6 +71,7 @@ app.use(session({
 
 app.use('/api', require('./routes/api'));
 app.use('/api/admin', require('./routes/admin-api'));
+app.use('/api/billing', require('./routes/billing'));
 app.use('/api/auth', require('./routes/user-auth'));
 
 // ── Google OAuth ──────────────────────────────────────────────────────

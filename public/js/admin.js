@@ -1,27 +1,74 @@
 /* Admin panel */
 const DAYS = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
 
-// ── Init ──────────────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', async () => {
-  const { authenticated } = await api('GET', '/api/admin/check-auth');
-  if (authenticated) showDashboard();
-  else showLogin();
+  // Wire up slug auto-generation from shop name
+  const shopNameInput = document.getElementById('regShopName');
+  if (shopNameInput) {
+    shopNameInput.addEventListener('input', function () {
+      document.getElementById('regSlug').value = this.value
+        .toLowerCase()
+        .replace(/[^a-z0-9\s-]/g, '')
+        .replace(/\s+/g, '-')
+        .replace(/-+/g, '-')
+        .replace(/^-+|-+$/g, '')
+        .slice(0, 40);
+    });
+  }
+
+  // Clear the ?subscribed=1 param Stripe adds after checkout
+  if (new URLSearchParams(window.location.search).get('subscribed') === '1') {
+    history.replaceState({}, '', '/admin');
+  }
+
+  let data = { authenticated: false };
+  try { data = await api('GET', '/api/admin/check-auth'); } catch {}
+
+  if (!data.authenticated) {
+    showLogin();
+  } else if (!data.subscriptionActive) {
+    showSubscriptionRequired();
+  } else {
+    showDashboard(data.shopName);
+  }
 });
 
 // ── Auth ──────────────────────────────────────────────────────────────
 function showLogin() {
   document.getElementById('loginPage').style.display = 'flex';
+  document.getElementById('subscriptionPage').style.display = 'none';
   document.getElementById('adminShell').style.display = 'none';
 }
-function showDashboard() {
+
+function showSubscriptionRequired() {
   document.getElementById('loginPage').style.display = 'none';
+  document.getElementById('subscriptionPage').style.display = 'flex';
+  document.getElementById('adminShell').style.display = 'none';
+}
+
+function showDashboard(shopName) {
+  document.getElementById('loginPage').style.display = 'none';
+  document.getElementById('subscriptionPage').style.display = 'none';
   document.getElementById('adminShell').style.display = 'flex';
+  if (shopName) {
+    const brand = document.querySelector('.brand');
+    if (brand) brand.innerHTML = '&#9986; ' + esc(shopName);
+  }
   switchTab('today');
+}
+
+function loginTab(tab) {
+  const isSignIn = tab === 'signin';
+  document.getElementById('tabSignIn').classList.toggle('active', isSignIn);
+  document.getElementById('tabRegister').classList.toggle('active', !isSignIn);
+  document.getElementById('signinPane').style.display = isSignIn ? '' : 'none';
+  document.getElementById('registerPane').style.display = isSignIn ? 'none' : '';
 }
 
 async function doLogin(e) {
   e.preventDefault();
-  const pw = document.getElementById('loginPw').value;
+  const email = document.getElementById('loginEmail').value.trim();
+  const pw    = document.getElementById('loginPw').value;
   const errEl = document.getElementById('loginErr');
   errEl.style.display = 'none';
   errEl.textContent = '';
@@ -29,14 +76,39 @@ async function doLogin(e) {
     const r = await fetch('/api/admin/login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ password: pw }),
+      body: JSON.stringify({ email: email || undefined, password: pw }),
     });
-    if (r.ok) { showDashboard(); }
-    else {
-      const d = await r.json();
-      errEl.textContent = d.error || 'Login failed';
-      errEl.style.display = 'block';
+    const d = await r.json();
+    if (!r.ok) { errEl.textContent = d.error || 'Login failed'; errEl.style.display = 'block'; return; }
+    const auth = await api('GET', '/api/admin/check-auth');
+    if (auth.subscriptionActive) {
+      showDashboard(auth.shopName);
+    } else {
+      showSubscriptionRequired();
     }
+  } catch {
+    errEl.textContent = 'Network error';
+    errEl.style.display = 'block';
+  }
+}
+
+async function doRegister(e) {
+  e.preventDefault();
+  const shopName = document.getElementById('regShopName').value.trim();
+  const email    = document.getElementById('regEmail').value.trim();
+  const pw       = document.getElementById('regPw').value;
+  const slug     = document.getElementById('regSlug').value.trim();
+  const errEl    = document.getElementById('registerErr');
+  errEl.style.display = 'none';
+  try {
+    const r = await fetch('/api/admin/register', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password: pw, shopName, slug }),
+    });
+    const d = await r.json();
+    if (!r.ok) { errEl.textContent = d.error || 'Registration failed'; errEl.style.display = 'block'; return; }
+    showSubscriptionRequired();
   } catch {
     errEl.textContent = 'Network error';
     errEl.style.display = 'block';
@@ -46,6 +118,27 @@ async function doLogin(e) {
 async function doLogout() {
   await api('POST', '/api/admin/logout');
   showLogin();
+}
+
+async function goSubscribe() {
+  try {
+    const r = await fetch('/api/billing/create-checkout', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+    });
+    const d = await r.json();
+    if (d.url) { window.location.href = d.url; }
+    else showToast(d.error || 'Could not start checkout', 'error');
+  } catch { showToast('Network error', 'error'); }
+}
+
+async function openBillingPortal() {
+  try {
+    const r = await fetch('/api/billing/portal');
+    const d = await r.json();
+    if (d.url) { window.location.href = d.url; }
+    else showToast(d.error || 'Billing portal unavailable', 'error');
+  } catch { showToast('Network error', 'error'); }
 }
 
 // ── Tabs ──────────────────────────────────────────────────────────────
@@ -179,10 +272,10 @@ function editService(id) {
 }
 
 async function saveService(id) {
-  const name     = document.getElementById(`ename-${id}`).value.trim();
-  const dur      = document.getElementById(`edur-${id}`).value;
-  const price    = document.getElementById(`eprice-${id}`).value;
-  const active   = document.getElementById(`eactive-${id}`).checked;
+  const name   = document.getElementById(`ename-${id}`).value.trim();
+  const dur    = document.getElementById(`edur-${id}`).value;
+  const price  = document.getElementById(`eprice-${id}`).value;
+  const active = document.getElementById(`eactive-${id}`).checked;
 
   if (!name) return alert('Name is required');
 
@@ -286,9 +379,8 @@ async function loadSettings() {
   if (data.deposit_amount) document.getElementById('depositAmount').value = data.deposit_amount;
   togglePaymentMode();
 
-  const reqLogin = data.require_login === 'true';
-  document.getElementById('requireLogin').checked = reqLogin;
-  document.getElementById('allowGuest').checked = data.allow_guest !== 'false';
+  document.getElementById('requireLogin').checked = data.require_login === 'true';
+  document.getElementById('allowGuest').checked   = data.allow_guest !== 'false';
   toggleLoginSettings();
 }
 
@@ -299,7 +391,7 @@ function togglePaymentMode() {
 
 function selectedPaymentMode() {
   if (document.getElementById('modeDepositRadio').checked) return 'deposit';
-  if (document.getElementById('modeFullRadio').checked) return 'full';
+  if (document.getElementById('modeFullRadio').checked)    return 'full';
   return 'in_person';
 }
 
@@ -338,11 +430,27 @@ function updateProfileHero(name) {
 
 async function loadAccount() {
   try {
-    const data = await api('GET', '/api/admin/profile');
-    if (data.name)  document.getElementById('profileName').value  = data.name;
-    if (data.email) document.getElementById('profileEmail').value = data.email;
-    if (data.phone) document.getElementById('profilePhone').value = data.phone;
-    updateProfileHero(data.name);
+    const [profile, auth] = await Promise.all([
+      api('GET', '/api/admin/profile'),
+      api('GET', '/api/admin/check-auth'),
+    ]);
+    if (profile.name)  document.getElementById('profileName').value  = profile.name;
+    if (profile.email) document.getElementById('profileEmail').value = profile.email;
+    if (profile.phone) document.getElementById('profilePhone').value = profile.phone;
+    updateProfileHero(profile.name);
+
+    // Billing info
+    const statusEl = document.getElementById('billingStatus');
+    const urlEl    = document.getElementById('billingBookingUrl');
+    if (statusEl) {
+      const status = auth.subscriptionStatus || 'active';
+      const labels = { active:'Active', trialing:'Trial', inactive:'Inactive', cancelled:'Cancelled', past_due:'Past Due' };
+      statusEl.innerHTML = `<span class="sub-badge ${status}">${labels[status] || status}</span>`;
+    }
+    if (urlEl && auth.shopSlug) {
+      const url = `${window.location.origin}/${auth.shopSlug}`;
+      urlEl.innerHTML = `<a href="${esc(url)}" target="_blank" style="color:var(--gold)">${esc(url)}</a>`;
+    }
   } catch {}
 }
 
@@ -377,13 +485,8 @@ async function changePassword(e) {
     body: JSON.stringify({ current_password: cur, new_password: next }),
   });
   const d = await r.json();
-  if (r.ok) {
-    showToast('Password changed!');
-    e.target.reset();
-  } else {
-    errEl.textContent = d.error || 'Failed';
-    errEl.style.display = 'block';
-  }
+  if (r.ok) { showToast('Password changed!'); e.target.reset(); }
+  else { errEl.textContent = d.error || 'Failed'; errEl.style.display = 'block'; }
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────
