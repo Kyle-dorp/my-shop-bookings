@@ -89,7 +89,7 @@ async function initDB() {
         value TEXT NOT NULL
       )
     `);
-    const defaults = { max_booking_days: '60', deposit_required: 'false', deposit_amount: '10' };
+    const defaults = { max_booking_days: '60', deposit_required: 'false', deposit_amount: '10', require_login: 'false', allow_guest: 'true' };
     for (const [key, value] of Object.entries(defaults)) {
       await client.query(
         `INSERT INTO settings (key, value) VALUES ($1, $2) ON CONFLICT (key) DO NOTHING`,
@@ -120,6 +120,7 @@ async function initDB() {
     await client.query(`ALTER TABLE admin_users ADD COLUMN IF NOT EXISTS name VARCHAR(100) DEFAULT 'Admin'`);
     await client.query(`ALTER TABLE admin_users ADD COLUMN IF NOT EXISTS email VARCHAR(100)`);
     await client.query(`ALTER TABLE admin_users ADD COLUMN IF NOT EXISTS phone VARCHAR(20)`);
+    await client.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS google_id VARCHAR(100) UNIQUE`);
 
     const svcCheck = await client.query('SELECT id FROM services LIMIT 1');
     if (svcCheck.rows.length === 0) {

@@ -7,14 +7,25 @@ let maxBookingDays = 60;
 let depositRequired = false;
 let depositAmount = 0;
 let stripeKey = null;
+let requireLogin = false;
+let allowGuest = true;
+let googleConfigured = false;
 let stripe, stripeElements;
 
 const MONTH_NAMES = ['January','February','March','April','May','June',
                      'July','August','September','October','November','December'];
 
 document.addEventListener('DOMContentLoaded', async () => {
-  // Handle return from Stripe 3DS redirect
   const params = new URLSearchParams(window.location.search);
+
+  // Handle Google OAuth error return
+  if (params.get('auth_error')) {
+    history.replaceState({}, '', '/');
+    const errEl = document.getElementById('siErr');
+    if (errEl) { errEl.textContent = 'Google sign-in failed. Please try a different method.'; errEl.style.display = 'block'; }
+  }
+
+  // Handle return from Stripe 3DS redirect
   if (params.get('payment_return') === '1') {
     const pending = sessionStorage.getItem('pendingBooking');
     if (pending) {
@@ -47,8 +58,11 @@ async function checkAuth() {
   if (currentUser) {
     updateUserBar(currentUser);
     goStep(1);
+  } else if (!requireLogin) {
+    // Auth screen disabled — go straight to booking
+    goStep(1);
   }
-  // else: stay on step 0 (already active by default)
+  // else: stay on step 0
 }
 
 function updateUserBar(user) {
@@ -142,6 +156,25 @@ async function fetchSettings() {
     depositRequired = d.deposit_required === 'true';
     depositAmount   = parseFloat(d.deposit_amount) || 0;
     stripeKey       = d.stripe_publishable_key || null;
+    requireLogin    = d.require_login === 'true';
+    allowGuest      = d.allow_guest !== 'false';
+    googleConfigured = !!d.google_configured;
+
+    // Show/hide guest button based on admin setting
+    const guestBtn = document.getElementById('guestBtn');
+    if (guestBtn) guestBtn.style.display = allowGuest ? '' : 'none';
+
+    // Enable Google button if credentials are configured
+    const googleBtn = document.getElementById('googleBtn');
+    if (googleBtn && googleConfigured) {
+      googleBtn.disabled = false;
+      googleBtn.style.cursor = 'pointer';
+      googleBtn.style.color = '#333';
+      const soon = googleBtn.querySelector('.google-soon');
+      if (soon) soon.style.display = 'none';
+      googleBtn.querySelector('svg').style.opacity = '1';
+      googleBtn.addEventListener('click', () => { window.location.href = '/auth/google'; });
+    }
 
     const show = depositRequired && stripeKey && depositAmount > 0;
     document.getElementById('step5line').style.display = show ? '' : 'none';

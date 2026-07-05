@@ -224,6 +224,12 @@ router.put('/settings', async (req, res) => {
       if (isNaN(amt) || amt < 0) throw new Error('Invalid deposit amount');
       await upsert('deposit_amount', amt.toFixed(2));
     }
+    if (req.body.require_login !== undefined) {
+      await upsert('require_login', req.body.require_login ? 'true' : 'false');
+    }
+    if (req.body.allow_guest !== undefined) {
+      await upsert('allow_guest', req.body.allow_guest ? 'true' : 'false');
+    }
     await client.query('COMMIT');
     res.json({ success: true });
   } catch (err) {

@@ -215,6 +215,26 @@
             <input type="number" id="depositAmount" min="1" step="0.01" placeholder="10.00" style="max-width:120px">
           </div>
         </div>
+        <div style="border-top:1px solid var(--border);margin:1.25rem 0;padding-top:1.25rem">
+          <h3 style="font-size:.95rem;margin-bottom:1rem">Customer Sign-In</h3>
+          <div class="form-group">
+            <label class="closed-toggle" style="font-size:.95rem">
+              <input type="checkbox" id="requireLogin" onchange="toggleLoginSettings()">
+              Require customers to sign in before booking
+            </label>
+            <p style="font-size:.8rem;color:#888;margin-top:.4rem;margin-left:22px">When off, customers go straight to booking. When on, they see a sign-in screen first.</p>
+          </div>
+          <div id="loginSettingsGroup" style="display:none;padding-left:22px">
+            <div class="form-group">
+              <label class="closed-toggle" style="font-size:.92rem">
+                <input type="checkbox" id="allowGuest" checked>
+                Allow guest bookings (no account required)
+              </label>
+              <p style="font-size:.8rem;color:#888;margin-top:.4rem;margin-left:22px">When off, customers must sign in or create an account to book.</p>
+            </div>
+          </div>
+        </div>
+
         <p id="settingsErr" class="error-msg" style="display:none"></p>
         <button class="btn btn-primary" onclick="saveSettings()">Save Settings</button>
       </div>

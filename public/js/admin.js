@@ -285,11 +285,21 @@ async function loadSettings() {
   document.getElementById('depositRequired').checked = depReq;
   if (data.deposit_amount) document.getElementById('depositAmount').value = data.deposit_amount;
   toggleDepositAmt();
+
+  const reqLogin = data.require_login === 'true';
+  document.getElementById('requireLogin').checked = reqLogin;
+  document.getElementById('allowGuest').checked = data.allow_guest !== 'false';
+  toggleLoginSettings();
 }
 
 function toggleDepositAmt() {
   const checked = document.getElementById('depositRequired').checked;
   document.getElementById('depositAmtGroup').style.display = checked ? 'block' : 'none';
+}
+
+function toggleLoginSettings() {
+  const checked = document.getElementById('requireLogin').checked;
+  document.getElementById('loginSettingsGroup').style.display = checked ? 'block' : 'none';
 }
 
 async function saveSettings() {
@@ -299,6 +309,8 @@ async function saveSettings() {
     max_booking_days: document.getElementById('maxBookingDays').value,
     deposit_required: document.getElementById('depositRequired').checked,
     deposit_amount:   document.getElementById('depositAmount').value || '0',
+    require_login:    document.getElementById('requireLogin').checked,
+    allow_guest:      document.getElementById('allowGuest').checked,
   };
   const r = await fetch('/api/admin/settings', {
     method: 'PUT',
