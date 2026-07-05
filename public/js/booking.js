@@ -1,6 +1,7 @@
 /* Customer booking flow */
 const state = { service: null, date: null, time: null, customerInfo: null };
 let currentUser = null;
+let currentStep = null;
 
 let calYear, calMonth;
 let maxBookingDays = 60;
@@ -56,7 +57,6 @@ async function checkAuth() {
     currentUser = null;
   }
   if (currentUser) {
-    updateUserBar(currentUser);
     goStep(1);
   } else if (!requireLogin) {
     // Auth screen disabled — go straight to booking
@@ -71,6 +71,9 @@ function updateUserBar(user) {
   if (user) {
     bar.innerHTML = `Hi, <strong>${esc(user.name)}</strong> &nbsp;·&nbsp; <button onclick="signOut()">Sign out</button>`;
     bar.style.display = 'flex';
+  } else if (currentStep !== 0 && currentStep !== null) {
+    bar.innerHTML = `<button onclick="goStep(0)">Sign in / Create account</button>`;
+    bar.style.display = 'flex';
   } else {
     bar.style.display = 'none';
   }
@@ -79,7 +82,6 @@ function updateUserBar(user) {
 async function signOut() {
   await fetch('/api/auth/logout', { method: 'POST' });
   currentUser = null;
-  updateUserBar(null);
   state.service = state.date = state.time = state.customerInfo = null;
   goStep(0);
 }
@@ -309,6 +311,7 @@ function selectSlot(time,el) {
 
 // ── Navigation ────────────────────────────────────────────────────────
 function goStep(n) {
+  currentStep = n;
   const indicators = document.getElementById('stepIndicators');
   indicators.style.display = (n === 0 || n === 'success') ? 'none' : 'flex';
 
@@ -324,6 +327,8 @@ function goStep(n) {
 
   const el = n==='success' ? document.getElementById('stepSuccess') : document.getElementById(`step${n}`);
   if(el) el.classList.add('active');
+
+  updateUserBar(currentUser);
 
   if(n===2) initCalendar();
   if(n===3) loadSlots();
