@@ -89,13 +89,16 @@ async function initDB() {
         value TEXT NOT NULL
       )
     `);
-    const defaults = { max_booking_days: '60', deposit_required: 'false', deposit_amount: '10', require_login: 'false', allow_guest: 'true' };
+    const defaults = { max_booking_days: '60', deposit_required: 'false', deposit_amount: '10', require_login: 'true', allow_guest: 'true' };
     for (const [key, value] of Object.entries(defaults)) {
       await client.query(
         `INSERT INTO settings (key, value) VALUES ($1, $2) ON CONFLICT (key) DO NOTHING`,
         [key, value]
       );
     }
+
+    // One-time migration: flip require_login to true for existing installs that had old 'false' default
+    await client.query(`UPDATE settings SET value = 'true' WHERE key = 'require_login' AND value = 'false'`);
 
     // Migrations
     await client.query(`
