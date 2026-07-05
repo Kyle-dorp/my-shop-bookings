@@ -55,9 +55,29 @@ body {
 
 /* ── Booking layout ── */
 .booking-app { min-height: 100vh; }
+
+.booking-brand {
+  text-align: center;
+  padding: 3.5rem 1rem 2rem;
+}
+.booking-brand-name {
+  font-size: 1.85rem;
+  font-weight: 800;
+  color: var(--gold);
+  letter-spacing: 0.06em;
+}
+.booking-brand-tag {
+  font-size: 0.75rem;
+  color: rgba(255,255,255,0.32);
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+  margin-top: 0.4rem;
+  font-weight: 300;
+}
+
 .booking-container {
   max-width: 640px;
-  margin: 1.75rem auto;
+  margin: 0 auto;
   padding: 0 1rem 4rem;
 }
 
