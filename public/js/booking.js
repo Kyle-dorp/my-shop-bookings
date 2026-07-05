@@ -529,13 +529,22 @@ function showSuccess(id, name) {
   document.querySelectorAll('.booking-step').forEach(s=>s.classList.remove('active'));
   document.getElementById('stepSuccess').classList.add('active');
   document.getElementById('stepIndicators').style.display = 'none';
+
+  const paidDeposit = depositRequired && depositAmount > 0;
+  document.querySelector('.success-text').textContent = paidDeposit
+    ? 'Your deposit is confirmed. Pay the remaining balance when you arrive.'
+    : 'Show your confirmation number at the shop — pay in full when you arrive.';
+
   document.getElementById('confirmationDetails').innerHTML=`
     <div class="confirmation-row"><span class="label">Confirmation #</span><span class="value">#${String(id).padStart(5,'0')}</span></div>
     <div class="confirmation-row"><span class="label">Service</span><span class="value">${state.service.name}</span></div>
     <div class="confirmation-row"><span class="label">Date</span><span class="value">${fmtDate(state.date)}</span></div>
     <div class="confirmation-row"><span class="label">Time</span><span class="value">${fmtTime(state.time)}</span></div>
     <div class="confirmation-row"><span class="label">Name</span><span class="value">${name}</span></div>
-    ${depositRequired&&depositAmount>0?`<div class="confirmation-row"><span class="label">Deposit paid</span><span class="value" style="color:var(--green)">$${depositAmount.toFixed(2)} ✓</span></div>`:''}`;
+    ${paidDeposit
+      ? `<div class="confirmation-row"><span class="label">Deposit paid</span><span class="value" style="color:#2ecc71">$${depositAmount.toFixed(2)} ✓</span></div>`
+      : `<div class="confirmation-row"><span class="label">Payment</span><span class="value">Pay at shop</span></div>`
+    }`;
   window.scrollTo({top:0,behavior:'smooth'});
 }
 

@@ -202,15 +202,27 @@
             <p style="font-size:.8rem;color:#888;margin-top:.4rem">Default is 60 days (2 months). Set to 14 for 2 weeks, 365 for a full year.</p>
         </div>
         <div style="border-top:1px solid var(--border);margin:1.25rem 0;padding-top:1.25rem">
-          <h3 style="font-size:.95rem;margin-bottom:1rem">Deposit Collection (Stripe)</h3>
-          <div class="form-group">
-            <label class="closed-toggle" style="font-size:.95rem">
-              <input type="checkbox" id="depositRequired" onchange="toggleDepositAmt()">
-              Require deposit to confirm bookings
+          <h3 style="font-size:.95rem;font-weight:700;margin-bottom:.4rem">Payment Mode</h3>
+          <p style="font-size:.78rem;color:#555;margin-bottom:.9rem">How customers pay for their appointment</p>
+          <div class="payment-mode-group">
+            <label class="payment-mode-option">
+              <input type="radio" name="paymentMode" value="in_person" id="modeInPersonRadio" onchange="togglePaymentMode()" checked>
+              <div class="payment-mode-icon">💸</div>
+              <div class="payment-mode-content">
+                <div class="payment-mode-title">Pay in Person</div>
+                <div class="payment-mode-desc">Customer gets a booking confirmation number and pays in full when they arrive. No online payment needed.</div>
+              </div>
             </label>
-            <p style="font-size:.8rem;color:#888;margin-top:.4rem;margin-left:22px">Customers pay this upfront by card. You collect the rest in person.</p>
+            <label class="payment-mode-option">
+              <input type="radio" name="paymentMode" value="deposit" id="modeDepositRadio" onchange="togglePaymentMode()">
+              <div class="payment-mode-icon">💳</div>
+              <div class="payment-mode-content">
+                <div class="payment-mode-title">Collect Deposit via Stripe</div>
+                <div class="payment-mode-desc">Customer pays a deposit online to lock in their slot. Collect the remaining balance in person.</div>
+              </div>
+            </label>
           </div>
-          <div class="form-group" id="depositAmtGroup" style="display:none">
+          <div class="form-group" id="depositAmtGroup" style="display:none;margin-top:.75rem">
             <label>Deposit amount ($)</label>
             <input type="number" id="depositAmount" min="1" step="0.01" placeholder="10.00" style="max-width:120px">
           </div>

@@ -282,9 +282,9 @@ async function loadSettings() {
   const data = await api('GET', '/api/admin/settings');
   if (data.max_booking_days) document.getElementById('maxBookingDays').value = data.max_booking_days;
   const depReq = data.deposit_required === 'true';
-  document.getElementById('depositRequired').checked = depReq;
+  document.getElementById(depReq ? 'modeDepositRadio' : 'modeInPersonRadio').checked = true;
   if (data.deposit_amount) document.getElementById('depositAmount').value = data.deposit_amount;
-  toggleDepositAmt();
+  togglePaymentMode();
 
   const reqLogin = data.require_login === 'true';
   document.getElementById('requireLogin').checked = reqLogin;
@@ -292,9 +292,9 @@ async function loadSettings() {
   toggleLoginSettings();
 }
 
-function toggleDepositAmt() {
-  const checked = document.getElementById('depositRequired').checked;
-  document.getElementById('depositAmtGroup').style.display = checked ? 'block' : 'none';
+function togglePaymentMode() {
+  const isDeposit = document.getElementById('modeDepositRadio').checked;
+  document.getElementById('depositAmtGroup').style.display = isDeposit ? 'block' : 'none';
 }
 
 function toggleLoginSettings() {
@@ -307,7 +307,7 @@ async function saveSettings() {
   errEl.style.display = 'none';
   const body = {
     max_booking_days: document.getElementById('maxBookingDays').value,
-    deposit_required: document.getElementById('depositRequired').checked,
+    deposit_required: document.getElementById('modeDepositRadio').checked,
     deposit_amount:   document.getElementById('depositAmount').value || '0',
     require_login:    document.getElementById('requireLogin').checked,
     allow_guest:      document.getElementById('allowGuest').checked,

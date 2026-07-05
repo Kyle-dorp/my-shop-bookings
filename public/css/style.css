@@ -1067,6 +1067,40 @@ select.edit-input { background: #0c0d0f; }
   border-color: rgba(200,169,110,.55); outline: none;
 }
 
+/* Payment mode selector (admin settings) */
+.payment-mode-group {
+  display: flex; flex-direction: column; gap: .6rem; margin-bottom: .5rem;
+}
+.payment-mode-option {
+  display: flex; align-items: flex-start; gap: .9rem;
+  padding: 1rem 1.1rem;
+  border: 1px solid #1e2128;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: border-color .22s, background .22s, box-shadow .22s;
+  user-select: none;
+}
+.payment-mode-option:hover {
+  border-color: rgba(200,169,110,.32);
+  background: rgba(200,169,110,.03);
+}
+.payment-mode-option:has(input:checked) {
+  border-color: rgba(200,169,110,.52);
+  background: rgba(200,169,110,.05);
+  box-shadow: 0 0 20px rgba(200,169,110,.08);
+}
+.payment-mode-option input[type=radio] {
+  margin-top: 3px; flex-shrink: 0;
+  accent-color: var(--gold);
+  width: 15px; height: 15px;
+}
+.payment-mode-icon { font-size: 1.25rem; flex-shrink: 0; margin-top: 1px; }
+.payment-mode-title {
+  font-size: .9rem; font-weight: 700;
+  color: #e2e4e7; margin-bottom: .28rem;
+}
+.payment-mode-desc { font-size: .78rem; color: #4b5563; line-height: 1.55; }
+
 /* Admin ambient bloom */
 .admin-body::before {
   content: '';
