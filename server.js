@@ -11,6 +11,18 @@ app.set('trust proxy', 1);
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// Never cache HTML — always serve fresh so CSS/JS version busting works
+app.use((req, res, next) => {
+  const ext = path.extname(req.path).toLowerCase();
+  if (!ext || ext === '.html') {
+    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+  }
+  next();
+});
+
 app.use(express.static(path.join(__dirname, 'public')));
 
 app.use(session({
