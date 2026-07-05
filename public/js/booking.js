@@ -56,13 +56,11 @@ async function checkAuth() {
   } catch {
     currentUser = null;
   }
-  if (currentUser) {
+  if (currentUser || !requireLogin) {
     goStep(1);
-  } else if (!requireLogin) {
-    // Auth screen disabled — go straight to booking
-    goStep(1);
+  } else {
+    goStep(0);
   }
-  // else: stay on step 0
 }
 
 function updateUserBar(user) {
@@ -312,29 +310,42 @@ function selectSlot(time,el) {
 // ── Navigation ────────────────────────────────────────────────────────
 function goStep(n) {
   currentStep = n;
-  const indicators = document.getElementById('stepIndicators');
-  indicators.style.display = (n === 0 || n === 'success') ? 'none' : 'flex';
+  const authScreen  = document.getElementById('authScreen');
+  const bookingFlow = document.getElementById('bookingFlow');
+  const indicators  = document.getElementById('stepIndicators');
 
-  document.querySelectorAll('.booking-step').forEach(s=>s.classList.remove('active'));
+  if (n === 0) {
+    authScreen.style.display  = '';
+    bookingFlow.style.display = 'none';
+    return;
+  }
 
-  if (n !== 0 && n !== 'success') {
-    document.querySelectorAll('.step-dot').forEach((dot,i)=>{
+  authScreen.style.display  = 'none';
+  bookingFlow.style.display = '';
+  indicators.style.display  = n === 'success' ? 'none' : 'flex';
+
+  document.querySelectorAll('.booking-step').forEach(s => s.classList.remove('active'));
+
+  if (n !== 'success') {
+    document.querySelectorAll('.step-dot').forEach((dot, i) => {
       dot.classList.remove('active','done');
-      if(i+1<n) dot.classList.add('done');
-      else if(i+1===n) dot.classList.add('active');
+      if (i+1 < n)       dot.classList.add('done');
+      else if (i+1 === n) dot.classList.add('active');
     });
   }
 
-  const el = n==='success' ? document.getElementById('stepSuccess') : document.getElementById(`step${n}`);
-  if(el) el.classList.add('active');
+  const el = n === 'success'
+    ? document.getElementById('stepSuccess')
+    : document.getElementById(`step${n}`);
+  if (el) el.classList.add('active');
 
   updateUserBar(currentUser);
 
-  if(n===2) initCalendar();
-  if(n===3) loadSlots();
-  if(n===4) prefillContact();
-  if(n===5) initStripePayment();
-  window.scrollTo({top:0,behavior:'smooth'});
+  if (n === 2) initCalendar();
+  if (n === 3) loadSlots();
+  if (n === 4) prefillContact();
+  if (n === 5) initStripePayment();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
 function prefillContact() {
@@ -485,5 +496,5 @@ function resetBooking() {
   state.service=state.date=state.time=state.customerInfo=null;
   ['customerName','customerPhone','customerEmail'].forEach(id=>document.getElementById(id).value='');
   loadServices();
-  goStep(currentUser ? 1 : 0);
+  goStep(currentUser || !requireLogin ? 1 : 0);
 }
