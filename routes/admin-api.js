@@ -255,6 +255,10 @@ router.get('/settings', async (req, res) => {
     const r = await pool.query('SELECT key, value FROM settings WHERE shop_id=$1', [req.shopId]);
     const s = {};
     r.rows.forEach(row => s[row.key] = row.value);
+    const sk = process.env.STRIPE_SECRET_KEY || '';
+    const pk = process.env.STRIPE_PUBLISHABLE_KEY || '';
+    s.stripe_configured = !!(sk && pk);
+    s.stripe_test_mode  = sk.startsWith('sk_test_') || pk.startsWith('pk_test_');
     res.json(s);
   } catch { res.status(500).json({ error: 'Server error' }); }
 });

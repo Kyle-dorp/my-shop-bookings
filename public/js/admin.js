@@ -382,6 +382,40 @@ async function loadSettings() {
   document.getElementById('requireLogin').checked = data.require_login === 'true';
   document.getElementById('allowGuest').checked   = data.allow_guest !== 'false';
   toggleLoginSettings();
+
+  // Stripe status card
+  const card = document.getElementById('stripeStatusCard');
+  if (!card) return;
+  if (!data.stripe_configured) {
+    card.innerHTML = `
+      <div style="padding:.9rem 1rem;background:rgba(231,76,60,.07);border:1px solid rgba(231,76,60,.18);border-radius:10px">
+        <div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.5rem">
+          <span style="color:#e74c3c;font-size:1rem">⚠</span>
+          <strong style="font-size:.875rem;color:#e74c3c">Stripe Not Connected</strong>
+        </div>
+        <p style="font-size:.78rem;color:#888;margin-bottom:.65rem">Online payments (deposit or pay-in-full) won't charge customers until you add your Stripe keys to Railway environment variables:</p>
+        <code style="display:block;font-size:.72rem;background:rgba(0,0,0,.18);border-radius:6px;padding:.5rem .75rem;color:#bbb;line-height:1.9;font-family:monospace">STRIPE_SECRET_KEY<br>STRIPE_PUBLISHABLE_KEY</code>
+        <p style="font-size:.72rem;color:#666;margin-top:.5rem">Get these from <strong style="color:#999">Stripe Dashboard → Developers → API Keys</strong></p>
+      </div>`;
+  } else if (data.stripe_test_mode) {
+    card.innerHTML = `
+      <div style="padding:.9rem 1rem;background:rgba(200,169,110,.07);border:1px solid rgba(200,169,110,.25);border-radius:10px">
+        <div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.4rem">
+          <span style="color:#c8a96e;font-size:1rem">⚡</span>
+          <strong style="font-size:.875rem;color:#c8a96e">Stripe — Test Mode</strong>
+        </div>
+        <p style="font-size:.78rem;color:#888">Stripe is connected but using <strong style="color:#c8a96e">test keys</strong>. No real money will be charged. To go live, swap your Railway env vars to your live Stripe keys (<code style="font-size:.72rem">sk_live_...</code> / <code style="font-size:.72rem">pk_live_...</code>).</p>
+      </div>`;
+  } else {
+    card.innerHTML = `
+      <div style="display:flex;align-items:center;gap:.65rem;padding:.8rem 1rem;background:rgba(46,204,113,.07);border:1px solid rgba(46,204,113,.2);border-radius:10px">
+        <span style="color:#2ecc71;font-size:1.1rem">✓</span>
+        <div>
+          <div style="font-weight:700;font-size:.875rem;color:#2ecc71">Stripe Live — Ready</div>
+          <div style="font-size:.78rem;color:#888;margin-top:.1rem">Real payments will be charged at booking.</div>
+        </div>
+      </div>`;
+  }
 }
 
 function togglePaymentMode() {
