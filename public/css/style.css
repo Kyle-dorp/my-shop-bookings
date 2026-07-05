@@ -868,13 +868,25 @@ body {
 }
 .admin-topbar .brand { font-weight: 800; color: var(--gold); font-size: 1rem; letter-spacing: 0.04em; }
 .admin-topbar .logout-btn {
-  background: transparent; border: 1px solid #1e2128;
-  color: #4b5563; padding: 0.35rem 0.8rem;
-  border-radius: 6px; cursor: pointer;
-  font-size: 0.8rem; font-family: inherit;
-  transition: border-color .2s, color .2s;
+  background: rgba(255,255,255,.04);
+  border: 1px solid rgba(255,255,255,.09);
+  border-radius: 99px;
+  color: #555; padding: .35rem 1rem;
+  cursor: pointer; font-size: .78rem;
+  font-family: inherit; font-weight: 600;
+  letter-spacing: .02em;
+  backdrop-filter: blur(8px);
+  transition: border-color .22s, color .22s, background .22s, box-shadow .22s,
+              transform .2s cubic-bezier(0.34,1.56,0.64,1);
 }
-.admin-topbar .logout-btn:hover { border-color: #374151; color: #9ca3af; }
+.admin-topbar .logout-btn:hover {
+  border-color: rgba(231,76,60,.4);
+  color: rgba(248,113,113,.9);
+  background: rgba(231,76,60,.07);
+  box-shadow: 0 0 16px rgba(231,76,60,.14);
+  transform: translateY(-1px) scale(1.02);
+}
+.admin-topbar .logout-btn:active { transform: scale(0.98); transition-duration: .1s; }
 
 /* Tabs */
 .admin-tabs {
@@ -962,9 +974,9 @@ tr:hover td { background: #131620; }
   font-weight: 600;
   letter-spacing: 0.02em;
 }
-.badge-confirmed { background: rgba(39,174,96,.12); color: #34d399; border: 1px solid rgba(39,174,96,.2); }
-.badge-cancelled { background: rgba(231,76,60,.1); color: #f87171; border: 1px solid rgba(231,76,60,.18); }
-.badge-completed { background: rgba(99,102,241,.1); color: #818cf8; border: 1px solid rgba(99,102,241,.18); }
+.badge-confirmed { background: transparent; color: rgba(52,211,153,.65); border: 1px solid rgba(52,211,153,.22); }
+.badge-cancelled { background: transparent; color: rgba(248,113,113,.65); border: 1px solid rgba(248,113,113,.22); }
+.badge-completed { background: transparent; color: rgba(129,140,248,.65); border: 1px solid rgba(129,140,248,.22); }
 
 /* Inline edit form */
 .service-edit-row { background: rgba(200,169,110,.04) !important; }
@@ -1017,7 +1029,22 @@ select.edit-input { background: #0c0d0f; }
   background: #111318; border: 1px solid #1e2128; color: #6b7280;
 }
 .admin-body .btn-secondary:hover { background: #161820; color: #9ca3af; border-color: #2a2d36; }
-.admin-body .btn-danger { background: rgba(231,76,60,.9); }
+.admin-body .btn-danger {
+  background: transparent;
+  border: 1px solid rgba(231,76,60,.32);
+  color: rgba(248,113,113,.75);
+  box-shadow: none;
+  transition: border-color .22s, color .22s, background .22s, box-shadow .22s,
+              transform .2s cubic-bezier(0.34,1.56,0.64,1);
+}
+.admin-body .btn-danger:hover {
+  background: rgba(231,76,60,.1);
+  border-color: rgba(231,76,60,.6);
+  color: #f87171;
+  box-shadow: 0 0 14px rgba(231,76,60,.18);
+  transform: translateY(-2px);
+}
+.admin-body .btn-danger:active { transform: translateY(0) scale(0.97); transition-duration: .1s; }
 
 /* Success/error messages */
 .admin-body .success-msg {
@@ -1081,15 +1108,20 @@ select.edit-input { background: #0c0d0f; }
 }
 .admin-body .btn-primary:active { transform: translateY(0) scale(0.98); transition-duration: .1s; }
 
-/* Admin secondary button */
+/* Admin secondary button — pill with gold hover */
 .admin-body .btn-secondary {
-  transition: background .2s, color .2s, border-color .2s, box-shadow .2s, transform .18s cubic-bezier(0.34,1.56,0.64,1);
+  border-radius: 99px;
+  transition: border-color .22s, color .22s, background .22s, box-shadow .22s,
+              transform .2s cubic-bezier(0.34,1.56,0.64,1);
 }
 .admin-body .btn-secondary:hover {
+  border-color: rgba(200,169,110,.35);
+  color: var(--gold);
+  background: rgba(200,169,110,.06);
+  box-shadow: 0 0 14px rgba(200,169,110,.12);
   transform: translateY(-2px);
-  box-shadow: 0 4px 16px rgba(0,0,0,.4);
 }
-.admin-body .btn-secondary:active { transform: translateY(0); transition-duration: .1s; }
+.admin-body .btn-secondary:active { transform: translateY(0) scale(0.97); transition-duration: .1s; }
 
 /* Admin section fade-in */
 .admin-section.active { animation: fadeUp 0.4s cubic-bezier(0.16,1,0.3,1); }
