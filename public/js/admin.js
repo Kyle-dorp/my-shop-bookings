@@ -323,12 +323,20 @@ async function saveSettings() {
 }
 
 // ── Account / Profile ─────────────────────────────────────────────────
+function updateProfileHero(name) {
+  const avatar = document.getElementById('profileHeroAvatar');
+  const nameEl = document.getElementById('profileHeroName');
+  if (avatar) avatar.textContent = (name || 'A')[0].toUpperCase();
+  if (nameEl) nameEl.textContent = name || 'Admin';
+}
+
 async function loadAccount() {
   try {
     const data = await api('GET', '/api/admin/profile');
     if (data.name)  document.getElementById('profileName').value  = data.name;
     if (data.email) document.getElementById('profileEmail').value = data.email;
     if (data.phone) document.getElementById('profilePhone').value = data.phone;
+    updateProfileHero(data.name);
   } catch {}
 }
 
@@ -344,7 +352,7 @@ async function saveProfile() {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ name, email, phone }),
   });
-  if (r.ok) showToast('Profile saved!');
+  if (r.ok) { showToast('Profile saved!'); updateProfileHero(name); }
   else { errEl.textContent = 'Save failed'; errEl.style.display = 'block'; }
 }
 

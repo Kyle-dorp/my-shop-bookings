@@ -416,12 +416,17 @@ function prefillContact() {
 // ── Booking form submit ───────────────────────────────────────────────
 async function submitBooking(e) {
   e.preventDefault();
-  state.customerInfo = {
-    name:  document.getElementById('customerName').value.trim(),
-    phone: document.getElementById('customerPhone').value.trim(),
-    email: document.getElementById('customerEmail').value.trim(),
-  };
+  const name  = document.getElementById('customerName').value.trim();
+  const phone = document.getElementById('customerPhone').value.trim();
+  const email = document.getElementById('customerEmail').value.trim();
   clearErrors();
+
+  if (!phone && !email) {
+    showFormError('Please enter at least a phone number or email address so we can reach you.');
+    return;
+  }
+
+  state.customerInfo = { name, phone, email };
 
   if (depositRequired && stripeKey && depositAmount > 0) {
     goStep(5);
