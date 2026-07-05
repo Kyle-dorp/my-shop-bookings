@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { pool } = require('../db');
+const { sendBookingConfirmation } = require('../utils/email');
 const stripeClient = process.env.STRIPE_SECRET_KEY
   ? require('stripe')(process.env.STRIPE_SECRET_KEY) : null;
 
@@ -127,17 +128,19 @@ router.post('/bookings', async (req, res) => {
     return res.status(400).json({ error: 'Missing required fields' });
   }
 
-  const nameClean = customer_name.trim();
+  const nameClean  = customer_name.trim();
   const phoneClean = (customer_phone || '').trim();
-  if (!nameClean || !phoneClean) return res.status(400).json({ error: 'Name and phone are required' });
+  const emailClean = (customer_email || '').trim();
+  if (!nameClean) return res.status(400).json({ error: 'Name is required' });
+  if (!phoneClean && !emailClean) return res.status(400).json({ error: 'Please provide a phone number or email address' });
 
   try {
     const svcResult = await pool.query(
-      'SELECT duration_minutes FROM services WHERE id = $1 AND active = true',
+      'SELECT name, duration_minutes FROM services WHERE id = $1 AND active = true',
       [service_id]
     );
     if (!svcResult.rows.length) return res.status(404).json({ error: 'Service not found' });
-    const duration = svcResult.rows[0].duration_minutes;
+    const { name: serviceName, duration_minutes: duration } = svcResult.rows[0];
 
     const startMins = timeToMinutes(appointment_time);
     const endTime = minutesToTime(startMins + duration);
@@ -160,10 +163,23 @@ router.post('/bookings', async (req, res) => {
         (service_id, customer_name, customer_phone, customer_email, appointment_date, appointment_time, end_time, payment_intent_id, user_id)
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
        RETURNING id`,
-      [service_id, nameClean, phoneClean || null, customer_email || null, appointment_date, appointment_time, endTime, req.body.payment_intent_id || null, req.session.userId || null]
+      [service_id, nameClean, phoneClean || null, emailClean || null, appointment_date, appointment_time, endTime, req.body.payment_intent_id || null, req.session.userId || null]
     );
 
-    res.json({ success: true, booking_id: result.rows[0].id });
+    const bookingId = result.rows[0].id;
+    res.json({ success: true, booking_id: bookingId });
+
+    // Fire-and-forget confirmation email
+    if (emailClean) {
+      sendBookingConfirmation({
+        to:             emailClean,
+        name:           nameClean,
+        service:        serviceName,
+        date:           appointment_date,
+        time:           appointment_time,
+        confirmationId: bookingId,
+      });
+    }
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Server error' });
