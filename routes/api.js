@@ -18,12 +18,12 @@ function minutesToTime(mins) {
 router.get('/settings', async (req, res) => {
   try {
     const r = await pool.query('SELECT key, value FROM settings');
-    const s = { max_booking_days: 60, deposit_required: 'false', deposit_amount: '10', require_login: 'false', allow_guest: 'true' };
+    const s = { max_booking_days: 60, payment_mode: 'in_person', deposit_required: 'false', deposit_amount: '10', require_login: 'false', allow_guest: 'true' };
     r.rows.forEach(row => s[row.key] = row.value);
     s.stripe_publishable_key = process.env.STRIPE_PUBLISHABLE_KEY || null;
     s.google_configured = !!(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET);
     res.json(s);
-  } catch { res.json({ max_booking_days: 60, deposit_required: 'false', deposit_amount: '10' }); }
+  } catch { res.json({ max_booking_days: 60, payment_mode: 'in_person', deposit_required: 'false', deposit_amount: '10' }); }
 });
 
 // POST /api/create-payment-intent

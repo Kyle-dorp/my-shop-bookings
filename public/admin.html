@@ -6,7 +6,7 @@
   <title>Admin — Scheduler</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/css/style.css?v=6">
+  <link rel="stylesheet" href="/css/style.css?v=7">
 </head>
 <body class="admin-body">
 
@@ -218,7 +218,15 @@
               <div class="payment-mode-icon">💳</div>
               <div class="payment-mode-content">
                 <div class="payment-mode-title">Collect Deposit via Stripe</div>
-                <div class="payment-mode-desc">Customer pays a deposit online to lock in their slot. Collect the remaining balance in person.</div>
+                <div class="payment-mode-desc">Customer pays a set deposit online to lock in their slot. You collect the remaining balance in person.</div>
+              </div>
+            </label>
+            <label class="payment-mode-option">
+              <input type="radio" name="paymentMode" value="full" id="modeFullRadio" onchange="togglePaymentMode()">
+              <div class="payment-mode-icon">💰</div>
+              <div class="payment-mode-content">
+                <div class="payment-mode-title">Pay in Full via Stripe</div>
+                <div class="payment-mode-desc">Customer pays the full service price online at booking. Nothing to collect at the door.</div>
               </div>
             </label>
           </div>

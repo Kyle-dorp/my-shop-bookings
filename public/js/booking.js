@@ -5,6 +5,7 @@ let currentStep = null;
 
 let calYear, calMonth;
 let maxBookingDays = 60;
+let paymentMode = 'in_person';
 let depositRequired = false;
 let depositAmount = 0;
 let stripeKey = null;
@@ -202,7 +203,8 @@ async function fetchSettings() {
   try {
     const d = await fetch('/api/settings').then(r => r.json());
     maxBookingDays  = parseInt(d.max_booking_days) || 60;
-    depositRequired = d.deposit_required === 'true';
+    paymentMode     = d.payment_mode || (d.deposit_required === 'true' ? 'deposit' : 'in_person');
+    depositRequired = paymentMode === 'deposit';
     depositAmount   = parseFloat(d.deposit_amount) || 0;
     stripeKey       = d.stripe_publishable_key || null;
     requireLogin    = d.require_login === 'true';
@@ -225,9 +227,9 @@ async function fetchSettings() {
       googleBtn.addEventListener('click', () => { window.location.href = '/auth/google'; });
     }
 
-    const show = depositRequired && stripeKey && depositAmount > 0;
-    document.getElementById('step5line').style.display = show ? '' : 'none';
-    document.getElementById('step5dot').style.display  = show ? '' : 'none';
+    const showStep5 = stripeKey && (paymentMode === 'deposit' ? depositAmount > 0 : paymentMode === 'full');
+    document.getElementById('step5line').style.display = showStep5 ? '' : 'none';
+    document.getElementById('step5dot').style.display  = showStep5 ? '' : 'none';
   } catch { maxBookingDays = 60; }
 }
 
@@ -317,12 +319,12 @@ async function loadServices() {
         ${s.price?`<div class="service-card-price">$${parseFloat(s.price).toFixed(2)}</div>`:''}
       </div>`).join('');
     services.forEach(s=>document.getElementById(`svc-${s.id}`)
-      .addEventListener('click',()=>selectService(s.id,s.name,s.duration_minutes)));
+      .addEventListener('click',()=>selectService(s.id,s.name,s.duration_minutes,parseFloat(s.price)||0)));
   } catch { grid.innerHTML='<p class="error-msg">Could not load services. Please refresh.</p>'; }
 }
 
-function selectService(id,name,duration) {
-  state.service={id,name,duration};
+function selectService(id,name,duration,price) {
+  state.service={id,name,duration,price:price||0};
   document.querySelectorAll('.service-card').forEach(c=>c.classList.remove('selected'));
   document.getElementById(`svc-${id}`).classList.add('selected');
   setTimeout(()=>goStep(2),180);
@@ -428,7 +430,9 @@ async function submitBooking(e) {
 
   state.customerInfo = { name, phone, email };
 
-  if (depositRequired && stripeKey && depositAmount > 0) {
+  if (paymentMode === 'deposit' && stripeKey && depositAmount > 0) {
+    goStep(5);
+  } else if (paymentMode === 'full' && stripeKey && state.service.price > 0) {
     goStep(5);
   } else {
     await createBooking(null);
@@ -439,16 +443,25 @@ async function submitBooking(e) {
 async function initStripePayment() {
   const container = document.getElementById('stripePaymentElement');
   container.innerHTML = '<div class="loading-spinner">Setting up payment…</div>';
-  document.getElementById('depositSubtitle').textContent =
-    `Pay a $${depositAmount.toFixed(2)} deposit to confirm your spot`;
+
+  const chargeAmount = paymentMode === 'full' ? state.service.price : depositAmount;
+  const isFullPay = paymentMode === 'full';
+
+  document.querySelector('#step5 h2').textContent = isFullPay ? 'Full Payment' : 'Secure Deposit';
+  document.getElementById('depositSubtitle').textContent = isFullPay
+    ? `Pay $${chargeAmount.toFixed(2)} to confirm your appointment`
+    : `Pay a $${chargeAmount.toFixed(2)} deposit to confirm your spot`;
+  document.getElementById('payBtn').textContent = isFullPay ? 'Pay & Confirm Booking' : 'Pay & Confirm Booking';
 
   try {
     const data = await fetch('/api/create-payment-intent', {
       method: 'POST',
       headers: {'Content-Type':'application/json'},
       body: JSON.stringify({
-        amount: depositAmount,
-        description: `Deposit — ${state.service.name} for ${state.customerInfo.name}`,
+        amount: chargeAmount,
+        description: isFullPay
+          ? `Full payment — ${state.service.name} for ${state.customerInfo.name}`
+          : `Deposit — ${state.service.name} for ${state.customerInfo.name}`,
       }),
     }).then(r=>r.json());
 
@@ -530,10 +543,18 @@ function showSuccess(id, name) {
   document.getElementById('stepSuccess').classList.add('active');
   document.getElementById('stepIndicators').style.display = 'none';
 
-  const paidDeposit = depositRequired && depositAmount > 0;
-  document.querySelector('.success-text').textContent = paidDeposit
-    ? 'Your deposit is confirmed. Pay the remaining balance when you arrive.'
-    : 'Show your confirmation number at the shop — pay in full when you arrive.';
+  let successMsg, paymentRow;
+  if (paymentMode === 'deposit' && depositAmount > 0) {
+    successMsg  = 'Your deposit is confirmed. Pay the remaining balance when you arrive.';
+    paymentRow  = `<div class="confirmation-row"><span class="label">Deposit paid</span><span class="value" style="color:#2ecc71">$${depositAmount.toFixed(2)} ✓</span></div>`;
+  } else if (paymentMode === 'full' && state.service.price > 0) {
+    successMsg  = 'Payment confirmed — you\'re all set. Nothing to pay at the door.';
+    paymentRow  = `<div class="confirmation-row"><span class="label">Paid in full</span><span class="value" style="color:#2ecc71">$${state.service.price.toFixed(2)} ✓</span></div>`;
+  } else {
+    successMsg  = 'Show your confirmation number at the shop — pay in full when you arrive.';
+    paymentRow  = `<div class="confirmation-row"><span class="label">Payment</span><span class="value">Pay at shop</span></div>`;
+  }
+  document.querySelector('.success-text').textContent = successMsg;
 
   document.getElementById('confirmationDetails').innerHTML=`
     <div class="confirmation-row"><span class="label">Confirmation #</span><span class="value">#${String(id).padStart(5,'0')}</span></div>
@@ -541,10 +562,7 @@ function showSuccess(id, name) {
     <div class="confirmation-row"><span class="label">Date</span><span class="value">${fmtDate(state.date)}</span></div>
     <div class="confirmation-row"><span class="label">Time</span><span class="value">${fmtTime(state.time)}</span></div>
     <div class="confirmation-row"><span class="label">Name</span><span class="value">${name}</span></div>
-    ${paidDeposit
-      ? `<div class="confirmation-row"><span class="label">Deposit paid</span><span class="value" style="color:#2ecc71">$${depositAmount.toFixed(2)} ✓</span></div>`
-      : `<div class="confirmation-row"><span class="label">Payment</span><span class="value">Pay at shop</span></div>`
-    }`;
+    ${paymentRow}`;
   window.scrollTo({top:0,behavior:'smooth'});
 }
 

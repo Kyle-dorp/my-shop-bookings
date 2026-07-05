@@ -216,8 +216,11 @@ router.put('/settings', async (req, res) => {
       if (isNaN(days) || days < 1 || days > 365) throw new Error('Days must be 1–365');
       await upsert('max_booking_days', days);
     }
-    if (req.body.deposit_required !== undefined) {
-      await upsert('deposit_required', req.body.deposit_required ? 'true' : 'false');
+    if (req.body.payment_mode !== undefined) {
+      const mode = req.body.payment_mode;
+      if (!['in_person', 'deposit', 'full'].includes(mode)) throw new Error('Invalid payment mode');
+      await upsert('payment_mode', mode);
+      await upsert('deposit_required', mode === 'deposit' ? 'true' : 'false');
     }
     if (req.body.deposit_amount !== undefined) {
       const amt = parseFloat(req.body.deposit_amount);
