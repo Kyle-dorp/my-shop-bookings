@@ -1618,3 +1618,121 @@ body:not(.admin-body) .account-trigger:hover {
 .sub-badge.inactive, .sub-badge.cancelled, .sub-badge.past_due {
   background: rgba(231,76,60,.12); color: #e74c3c;
 }
+
+/* ── Customer booking page — full dark theme ─────────────────────────
+   The barbershop photo fills the page as a fixed background with a
+   warm dark overlay, giving the booking UI a premium atmospheric feel.
+   CSS variable overrides cascade into every element automatically.
+───────────────────────────────────────────────────────────────────── */
+body:not(.admin-body) {
+  background:
+    linear-gradient(rgba(7,4,2,0.90), rgba(4,2,1,0.93)),
+    url('https://images.unsplash.com/photo-1621605815971-fbc98d665033?auto=format&fit=crop&w=1600&q=80')
+    center 30% / cover fixed;
+
+  /* Redefine light-mode vars so all elements inherit dark colours */
+  --bg:     transparent;
+  --white:  rgba(255,255,255,0.058);
+  --border: rgba(255,255,255,0.10);
+  --dark:   #e2e4e7;
+  --mid:    #9ca3af;
+  --muted:  #6b7280;
+  color: #d1d5db;
+}
+
+/* Site header: image already present, lighten overlay so photo breathes */
+body:not(.admin-body) .site-header-overlay {
+  background: rgba(6,4,2,0.70);
+}
+
+/* Auth panel */
+body:not(.admin-body) .auth-panel {
+  background: rgba(5,3,1,0.72);
+  border-left: 1px solid rgba(255,255,255,0.07);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+body:not(.admin-body) .auth-panel-title { color: #f0f0f0; }
+body:not(.admin-body) .google-btn {
+  background: rgba(255,255,255,0.06);
+  border-color: rgba(255,255,255,0.12);
+  color: #c0c0c0;
+}
+body:not(.admin-body) .google-btn:not(:disabled):hover {
+  background: rgba(255,255,255,0.10);
+  border-color: rgba(255,255,255,0.22);
+}
+body:not(.admin-body) .google-soon { background: rgba(255,255,255,0.08); color: #666; }
+body:not(.admin-body) .auth-divider { color: #2a2a2a; }
+body:not(.admin-body) .auth-divider::before,
+body:not(.admin-body) .auth-divider::after { background: rgba(255,255,255,0.08); }
+body:not(.admin-body) .auth-mode-btn {
+  background: rgba(255,255,255,0.04);
+  border-color: rgba(255,255,255,0.09);
+}
+body:not(.admin-body) .auth-mode-btn.active { background: rgba(255,255,255,0.11); }
+body:not(.admin-body) .auth-mode-label { color: #d1d5db; }
+body:not(.admin-body) .auth-mode-btn.active .auth-mode-label { color: #fff; }
+body:not(.admin-body) .auth-mode-sub { color: #555; }
+
+/* Inputs & selects */
+body:not(.admin-body) input:not([type=checkbox]):not([type=radio]),
+body:not(.admin-body) select,
+body:not(.admin-body) textarea {
+  background: rgba(255,255,255,0.05);
+  color: #e2e4e7;
+  border-color: rgba(255,255,255,0.12);
+}
+body:not(.admin-body) input::placeholder,
+body:not(.admin-body) textarea::placeholder { color: #3d4046; }
+body:not(.admin-body) input:focus,
+body:not(.admin-body) select:focus,
+body:not(.admin-body) textarea:focus {
+  border-color: rgba(200,169,110,0.55);
+  background: rgba(255,255,255,0.07);
+}
+
+/* Step indicators */
+body:not(.admin-body) .step-dot  { background: rgba(255,255,255,0.10); color: #4b5563; }
+body:not(.admin-body) .step-line { background: rgba(255,255,255,0.08); }
+
+/* Service cards */
+body:not(.admin-body) .service-card { color: #d1d5db; }
+body:not(.admin-body) .service-card:hover     { background: rgba(200,169,110,0.08); }
+body:not(.admin-body) .service-card.selected  { background: rgba(200,169,110,0.14); border-color: var(--gold); }
+
+/* Calendar */
+body:not(.admin-body) .cal-day         { color: #d1d5db; }
+body:not(.admin-body) .cal-day-off     { color: #2c2c2c; }
+body:not(.admin-body) .cal-day:hover   { background: rgba(200,169,110,0.12); }
+body:not(.admin-body) .cal-day-today   { color: var(--gold); }
+body:not(.admin-body) .cal-nav:hover:not(:disabled) { background: rgba(255,255,255,0.08); }
+
+/* Time slots */
+body:not(.admin-body) .slot-btn {
+  background: rgba(255,255,255,0.055);
+  color: #d1d5db;
+  border-color: rgba(255,255,255,0.10);
+}
+body:not(.admin-body) .slot-btn:hover  { background: rgba(200,169,110,0.12); border-color: rgba(200,169,110,0.5); color: var(--gold); }
+body:not(.admin-body) .slot-btn.selected { background: var(--gold); color: #1a1007; border-color: var(--gold); }
+
+/* Buttons */
+body:not(.admin-body) .btn-secondary         { background: rgba(255,255,255,0.08); color: #d1d5db; }
+body:not(.admin-body) .btn-secondary:hover   { background: rgba(255,255,255,0.13); color: #f0f0f0; }
+
+/* Account dropdown */
+body:not(.admin-body) .account-dropdown       { background: rgba(10,7,3,0.88); border-color: rgba(255,255,255,0.09); backdrop-filter: blur(12px); }
+body:not(.admin-body) .account-dropdown-actions button:hover { background: rgba(255,255,255,0.07); }
+body:not(.admin-body) .drop-name  { color: #e2e4e7; }
+body:not(.admin-body) .drop-email { color: #6b7280; }
+
+/* Confirmation & success */
+body:not(.admin-body) .confirmation-details { background: rgba(255,255,255,0.04); border-color: rgba(255,255,255,0.08); }
+body:not(.admin-body) .confirmation-row     { border-color: rgba(255,255,255,0.06); color: #d1d5db; }
+body:not(.admin-body) .confirmation-row .label { color: #6b7280; }
+body:not(.admin-body) .success-card { background: rgba(255,255,255,0.04); border-color: rgba(255,255,255,0.08); }
+
+/* Messages */
+body:not(.admin-body) .no-slots-msg { color: #9ca3af; }
+body:not(.admin-body) .error-msg    { background: rgba(231,76,60,0.08); border-color: rgba(231,76,60,0.18); color: #e05545; }
