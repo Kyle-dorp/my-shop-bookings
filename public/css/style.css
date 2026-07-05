@@ -1099,7 +1099,7 @@ select.edit-input { background: #0c0d0f; }
   font-size: .9rem; font-weight: 700;
   color: #e2e4e7; margin-bottom: .28rem;
 }
-.payment-mode-desc { font-size: .78rem; color: #4b5563; line-height: 1.55; }
+.payment-mode-desc { font-size: .78rem; color: #7c8394; line-height: 1.55; }
 
 /* Admin ambient bloom */
 .admin-body::before {
