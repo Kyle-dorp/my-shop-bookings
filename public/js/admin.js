@@ -397,7 +397,7 @@ async function api(method, url, body) {
 function p2(n) { return String(n).padStart(2,'0'); }
 function localDateStr(d) { return `${d.getFullYear()}-${p2(d.getMonth()+1)}-${p2(d.getDate())}`; }
 function fmtDate(str) {
-  const [y,m,d] = str.split('-').map(Number);
+  const [y,m,d] = String(str).slice(0,10).split('-').map(Number);
   return new Date(y,m-1,d).toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'});
 }
 function fmtTime(str) {
