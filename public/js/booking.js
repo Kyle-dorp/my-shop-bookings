@@ -44,6 +44,14 @@ document.addEventListener('DOMContentLoaded', async () => {
   document.getElementById('customerPhone').addEventListener('input', formatPhone);
   document.getElementById('regPhone').addEventListener('input', formatPhone);
 
+  // Close account dropdown when clicking outside
+  document.addEventListener('click', () => {
+    const drop   = document.getElementById('accountDropdown');
+    const corner = document.getElementById('accountCorner');
+    if (drop)   drop.style.display = 'none';
+    if (corner) corner.classList.remove('open');
+  });
+
   // Check if already signed in — skip auth screen if so
   await checkAuth();
 });
@@ -63,17 +71,60 @@ async function checkAuth() {
   }
 }
 
-function updateUserBar(user) {
-  const bar = document.getElementById('userBar');
-  if (!bar) return;
+function updateAccountCorner(user) {
+  const corner    = document.getElementById('accountCorner');
+  const trigger   = document.getElementById('accountTrigger');
+  const avatar    = document.getElementById('accountAvatar');
+  const nameEl    = document.getElementById('accountTriggerName');
+  const chevron   = document.getElementById('accountChevron');
+  const hdrEl     = document.getElementById('accountDropdownHeader');
+  const actionsEl = document.getElementById('accountDropdownActions');
+  if (!corner) return;
+
+  if (currentStep === 0 || currentStep === null) {
+    corner.style.display = 'none';
+    return;
+  }
+
+  corner.style.display = '';
+
   if (user) {
-    bar.innerHTML = `Hi, <strong>${esc(user.name)}</strong> &nbsp;·&nbsp; <button onclick="signOut()">Sign out</button>`;
-    bar.style.display = 'flex';
-  } else if (currentStep !== 0 && currentStep !== null) {
-    bar.innerHTML = `<button onclick="goStep(0)">Sign in / Create account</button>`;
-    bar.style.display = 'flex';
+    trigger.classList.remove('signin-mode');
+    avatar.textContent = (user.name || '?')[0].toUpperCase();
+    nameEl.textContent = user.name.split(' ')[0];
+    if (chevron) chevron.style.display = '';
+
+    if (hdrEl) hdrEl.innerHTML = `
+      <div class="drop-name">${esc(user.name)}</div>
+      ${user.email ? `<div class="drop-email">${esc(user.email)}</div>` : ''}
+    `;
+    if (actionsEl) actionsEl.innerHTML = `
+      <button class="signout-btn" onclick="signOut()">Sign out</button>
+    `;
   } else {
-    bar.style.display = 'none';
+    trigger.classList.add('signin-mode');
+    avatar.innerHTML = `<svg viewBox="0 0 20 20" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="10" cy="7" r="3"/><path d="M3 18c0-4 3-7 7-7s7 3 7 7"/></svg>`;
+    nameEl.textContent = 'Sign In';
+    if (chevron) chevron.style.display = 'none';
+    if (hdrEl) hdrEl.innerHTML = '';
+    if (actionsEl) actionsEl.innerHTML = '';
+    const drop = document.getElementById('accountDropdown');
+    if (drop) drop.style.display = 'none';
+    corner.classList.remove('open');
+  }
+}
+
+function accountCornerClick(e) {
+  if (e) e.stopPropagation();
+  if (!currentUser) {
+    goStep(0);
+  } else {
+    const drop   = document.getElementById('accountDropdown');
+    const corner = document.getElementById('accountCorner');
+    if (!drop) return;
+    const isOpen = drop.style.display !== 'none';
+    drop.style.display = isOpen ? 'none' : '';
+    if (corner) corner.classList.toggle('open', !isOpen);
   }
 }
 
@@ -113,7 +164,6 @@ async function doSignIn() {
     const d = await r.json();
     if (!r.ok) { errEl.textContent = d.error; errEl.style.display = 'block'; return; }
     currentUser = d.user;
-    updateUserBar(currentUser);
     goStep(1);
   } catch {
     errEl.textContent = 'Network error. Please try again.';
@@ -140,7 +190,6 @@ async function doRegister() {
     const d = await r.json();
     if (!r.ok) { errEl.textContent = d.error; errEl.style.display = 'block'; return; }
     currentUser = d.user;
-    updateUserBar(currentUser);
     goStep(1);
   } catch {
     errEl.textContent = 'Network error. Please try again.';
@@ -339,7 +388,7 @@ function goStep(n) {
     : document.getElementById(`step${n}`);
   if (el) el.classList.add('active');
 
-  updateUserBar(currentUser);
+  updateAccountCorner(currentUser);
 
   if (n === 2) initCalendar();
   if (n === 3) loadSlots();

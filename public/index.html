@@ -125,8 +125,6 @@
       </div>
     </header>
 
-    <div class="user-bar" id="userBar"></div>
-
     <main class="booking-container">
 
       <div class="step-indicators" id="stepIndicators" style="display:none">
@@ -238,6 +236,22 @@
 
     </main>
   </div><!-- /bookingFlow -->
+
+<!-- ── ACCOUNT CORNER (fixed overlay, shown during booking flow) ── -->
+<div class="account-corner" id="accountCorner" style="display:none">
+  <button class="account-trigger" id="accountTrigger" onclick="accountCornerClick(event)">
+    <div class="account-avatar" id="accountAvatar"></div>
+    <span class="account-trigger-name" id="accountTriggerName"></span>
+    <svg class="chevron-icon" id="accountChevron" viewBox="0 0 16 16" width="11" height="11" style="display:none">
+      <path d="M3 5.5l5 5 5-5" stroke="currentColor" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+  </button>
+  <div class="account-dropdown" id="accountDropdown" style="display:none">
+    <div class="account-dropdown-header" id="accountDropdownHeader"></div>
+    <div class="account-dropdown-divider"></div>
+    <div class="account-dropdown-actions" id="accountDropdownActions"></div>
+  </div>
+</div>
 
 </div><!-- /booking-app -->
 <script src="https://js.stripe.com/v3/"></script>

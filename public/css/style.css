@@ -360,24 +360,134 @@ body {
 .cal-day-today { font-weight: 700; color: var(--gold); }
 .cal-day-off  { color: #ccc; cursor: default; font-size: 0.8rem; }
 
-/* ── User bar (shown when signed in) ── */
-.user-bar {
-  display: none;
-  background: #fef9ef;
-  border-bottom: 1px solid #f0e4c0;
-  padding: .5rem 1rem;
-  font-size: .85rem;
+/* ── Account corner (fixed top-right pill + dropdown) ── */
+.account-corner {
+  position: fixed;
+  top: 1rem;
+  right: 1rem;
+  z-index: 200;
+}
+
+.account-trigger {
+  display: flex;
+  align-items: center;
+  gap: .45rem;
+  padding: .32rem .75rem .32rem .32rem;
+  background: rgba(20,20,20,0.70);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255,255,255,0.14);
+  border-radius: 100px;
+  cursor: pointer;
+  font-family: inherit;
+  color: #fff;
+  font-size: .82rem;
+  font-weight: 500;
+  transition: background .2s, border-color .2s;
+  white-space: nowrap;
+}
+.account-trigger:hover {
+  background: rgba(20,20,20,0.90);
+  border-color: rgba(255,255,255,0.28);
+}
+
+/* Logged-in avatar circle */
+.account-avatar {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: var(--gold);
+  color: var(--dark);
+  display: flex;
   align-items: center;
   justify-content: center;
-  gap: 1rem;
-  text-align: center;
+  font-size: .72rem;
+  font-weight: 800;
+  flex-shrink: 0;
 }
-.user-bar button {
-  background: none; border: none; cursor: pointer;
-  color: var(--muted); font-size: .82rem; font-family: inherit;
-  text-decoration: underline; padding: 0;
+
+.account-trigger-name {
+  max-width: 120px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
-.user-bar button:hover { color: var(--red); }
+
+.chevron-icon {
+  opacity: .65;
+  flex-shrink: 0;
+  transition: transform .2s;
+}
+.account-corner.open .chevron-icon { transform: rotate(180deg); }
+
+/* Sign-in mode (not logged in) */
+.account-trigger.signin-mode {
+  background: var(--gold);
+  border-color: var(--gold);
+  color: var(--dark);
+  font-weight: 600;
+  padding: .38rem .9rem .38rem .5rem;
+}
+.account-trigger.signin-mode:hover {
+  background: var(--gold-dark);
+  border-color: var(--gold-dark);
+}
+.account-trigger.signin-mode .account-avatar {
+  background: rgba(0,0,0,0.12);
+  color: var(--dark);
+}
+
+/* Dropdown */
+.account-dropdown {
+  position: absolute;
+  top: calc(100% + .5rem);
+  right: 0;
+  width: 210px;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0,0,0,.18), 0 2px 8px rgba(0,0,0,.08);
+  overflow: hidden;
+  border: 1px solid var(--border);
+}
+
+.account-dropdown-header {
+  padding: .85rem 1rem .8rem;
+  background: #fafafa;
+}
+.account-dropdown-header .drop-name {
+  font-size: .875rem;
+  font-weight: 700;
+  color: var(--dark);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-bottom: .1rem;
+}
+.account-dropdown-header .drop-email {
+  font-size: .75rem;
+  color: var(--muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.account-dropdown-divider { height: 1px; background: var(--border); }
+
+.account-dropdown-actions button {
+  display: block;
+  width: 100%;
+  padding: .72rem 1rem;
+  text-align: left;
+  background: none;
+  border: none;
+  font-family: inherit;
+  font-size: .875rem;
+  color: var(--dark);
+  cursor: pointer;
+  transition: background .15s;
+}
+.account-dropdown-actions button:hover { background: #f5f5f5; }
+.account-dropdown-actions .signout-btn { color: var(--red); }
 
 /* ── Auth split screen ── */
 .auth-split {
