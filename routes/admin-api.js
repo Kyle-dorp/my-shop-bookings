@@ -252,13 +252,18 @@ router.put('/hours', async (req, res) => {
 // --- Settings ---
 router.get('/settings', async (req, res) => {
   try {
-    const r = await pool.query('SELECT key, value FROM settings WHERE shop_id=$1', [req.shopId]);
+    const [settingsR, shopR] = await Promise.all([
+      pool.query('SELECT key, value FROM settings WHERE shop_id=$1', [req.shopId]),
+      pool.query('SELECT stripe_connect_account_id FROM shops WHERE id=$1', [req.shopId]),
+    ]);
     const s = {};
-    r.rows.forEach(row => s[row.key] = row.value);
+    settingsR.rows.forEach(row => s[row.key] = row.value);
     const sk = process.env.STRIPE_SECRET_KEY || '';
     const pk = process.env.STRIPE_PUBLISHABLE_KEY || '';
-    s.stripe_configured = !!(sk && pk);
-    s.stripe_test_mode  = sk.startsWith('sk_test_') || pk.startsWith('pk_test_');
+    s.stripe_configured      = !!(sk && pk);
+    s.stripe_test_mode       = sk.startsWith('sk_test_') || pk.startsWith('pk_test_');
+    s.stripe_connect_enabled = !!process.env.STRIPE_CONNECT_CLIENT_ID;
+    s.stripe_connect_status  = shopR.rows[0]?.stripe_connect_account_id ? 'connected' : 'not_connected';
     res.json(s);
   } catch { res.status(500).json({ error: 'Server error' }); }
 });

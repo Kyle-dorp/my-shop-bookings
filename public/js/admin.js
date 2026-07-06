@@ -16,8 +16,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
   }
 
-  // Clear the ?subscribed=1 param Stripe adds after checkout
-  if (new URLSearchParams(window.location.search).get('subscribed') === '1') {
+  // Clean up redirect params from Stripe and Stripe Connect callbacks
+  const urlParams = new URLSearchParams(window.location.search);
+  const didSubscribe     = urlParams.get('subscribed')    === '1';
+  const didConnect       = urlParams.get('connected')     === '1';
+  const didConnectError  = !!urlParams.get('connect_error');
+  if (didSubscribe || didConnect || didConnectError) {
     history.replaceState({}, '', '/admin');
   }
 
@@ -30,6 +34,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     showSubscriptionRequired();
   } else {
     showDashboard(data.shopName);
+    if (didConnect) {
+      switchTab('settings');
+      showToast('Stripe account connected! Customer payments will go to your bank.');
+    } else if (didConnectError) {
+      switchTab('settings');
+      showToast('Stripe connection failed — please try again.', 'error');
+    }
   }
 });
 
@@ -383,6 +394,9 @@ async function loadSettings() {
   document.getElementById('allowGuest').checked   = data.allow_guest !== 'false';
   toggleLoginSettings();
 
+  // Stripe Connect payout card
+  renderStripeConnect(data);
+
   // Stripe status card
   const card = document.getElementById('stripeStatusCard');
   if (!card) return;
@@ -432,6 +446,76 @@ async function loadSettings() {
         </div>
       </div>`;
   }
+}
+
+function renderStripeConnect(data) {
+  const card = document.getElementById('stripeConnectCard');
+  if (!card) return;
+
+  if (!data.stripe_configured) {
+    card.innerHTML = `
+      <div style="padding:.85rem 1rem;background:rgba(100,100,100,.07);border:1px solid rgba(255,255,255,.08);border-radius:10px;font-size:.8rem;color:#888">
+        Set up Stripe (above) first, then you can connect your payout account.
+      </div>`;
+    return;
+  }
+
+  if (!data.stripe_connect_enabled) {
+    card.innerHTML = `
+      <div style="padding:1rem;background:rgba(200,169,110,.06);border:1px solid rgba(200,169,110,.18);border-radius:10px">
+        <div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.65rem">
+          <span style="color:#c8a96e">⚙</span>
+          <strong style="font-size:.88rem;color:#c8a96e">One more step — Set up Stripe Connect</strong>
+        </div>
+        <p style="font-size:.78rem;color:#888;margin-bottom:.8rem">To route customer payments directly to your bank, add your Stripe Connect client ID:</p>
+        <ol style="font-size:.78rem;color:#888;margin:0 0 .9rem 1.1rem;line-height:2">
+          <li>Go to <a href="https://dashboard.stripe.com/settings/connect" target="_blank" style="color:var(--gold)">Stripe Dashboard → Connect → Settings</a></li>
+          <li>Scroll to <strong style="color:#ccc">OAuth settings</strong> and copy your <code style="background:rgba(0,0,0,.2);padding:.1rem .3rem;border-radius:4px;color:#ccc">Client ID</code> (starts with <code style="background:rgba(0,0,0,.2);padding:.1rem .3rem;border-radius:4px;color:#ccc">ca_...</code>)</li>
+          <li>Add it to Railway as <code style="background:rgba(0,0,0,.2);padding:.1rem .3rem;border-radius:4px;color:#ccc">STRIPE_CONNECT_CLIENT_ID</code> and redeploy</li>
+          <li>Also set your <strong style="color:#ccc">Redirect URI</strong> in Stripe Connect settings to: <code style="background:rgba(0,0,0,.2);padding:.1rem .3rem;border-radius:4px;color:#ccc;word-break:break-all">${window.location.origin}/api/billing/connect/callback</code></li>
+        </ol>
+        <a href="https://dashboard.stripe.com/settings/connect" target="_blank"
+           style="display:inline-flex;align-items:center;gap:.4rem;padding:.5rem 1rem;background:rgba(200,169,110,.15);border:1px solid rgba(200,169,110,.4);color:var(--gold);border-radius:8px;font-size:.8rem;font-weight:700;text-decoration:none">
+          Open Stripe Connect Settings →
+        </a>
+      </div>`;
+    return;
+  }
+
+  if (data.stripe_connect_status === 'connected') {
+    card.innerHTML = `
+      <div style="display:flex;align-items:center;gap:.65rem;padding:.85rem 1rem;background:rgba(46,204,113,.07);border:1px solid rgba(46,204,113,.2);border-radius:10px">
+        <span style="color:#2ecc71;font-size:1.2rem">✓</span>
+        <div style="flex:1">
+          <div style="font-weight:700;font-size:.9rem;color:#2ecc71">Payout Account Connected</div>
+          <div style="font-size:.78rem;color:#888;margin-top:.15rem">Customer payments go directly to your bank. Manage payouts in your <a href="https://dashboard.stripe.com" target="_blank" style="color:var(--gold)">Stripe Dashboard</a>.</div>
+        </div>
+        <button onclick="disconnectStripe()" class="btn btn-sm btn-danger" style="flex-shrink:0">Disconnect</button>
+      </div>`;
+  } else {
+    card.innerHTML = `
+      <div style="padding:1rem;background:rgba(100,100,100,.05);border:1px solid rgba(255,255,255,.09);border-radius:10px">
+        <div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.6rem">
+          <span style="color:#888">⚡</span>
+          <strong style="font-size:.88rem;color:#ccc">Not connected — payments go to platform account</strong>
+        </div>
+        <p style="font-size:.78rem;color:#888;margin-bottom:.8rem">Connect your Stripe account so customer deposits and full payments land in <em>your</em> bank, not ours.</p>
+        <a href="/api/billing/connect"
+           style="display:inline-flex;align-items:center;gap:.4rem;padding:.55rem 1.1rem;background:var(--gold);color:#1a1007;border-radius:8px;font-size:.85rem;font-weight:700;text-decoration:none">
+          Connect Stripe Account →
+        </a>
+      </div>`;
+  }
+}
+
+async function disconnectStripe() {
+  if (!confirm('Disconnect your Stripe payout account? Customer payments will stop routing to your bank until you reconnect.')) return;
+  try {
+    const r = await fetch('/api/billing/disconnect', { method: 'POST' });
+    const d = await r.json();
+    if (r.ok) { showToast('Stripe account disconnected.'); loadSettings(); }
+    else showToast(d.error || 'Disconnect failed', 'error');
+  } catch { showToast('Network error', 'error'); }
 }
 
 function togglePaymentMode() {

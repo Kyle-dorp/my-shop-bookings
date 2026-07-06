@@ -63,4 +63,55 @@ router.get('/portal', requireAdmin, async (req, res) => {
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
+// GET /api/billing/connect — start Stripe Connect OAuth
+router.get('/connect', requireAdmin, (req, res) => {
+  if (!stripe) return res.status(503).json({ error: 'Stripe not configured' });
+  if (!process.env.STRIPE_CONNECT_CLIENT_ID) {
+    return res.status(503).json({ error: 'Set STRIPE_CONNECT_CLIENT_ID in Railway env vars.' });
+  }
+  const state  = Buffer.from(String(req.shopId)).toString('base64');
+  const base   = `${req.protocol}://${req.get('host')}`;
+  const params = new URLSearchParams({
+    response_type: 'code',
+    client_id:    process.env.STRIPE_CONNECT_CLIENT_ID,
+    scope:        'read_write',
+    state,
+    redirect_uri: `${base}/api/billing/connect/callback`,
+  });
+  res.redirect(`https://connect.stripe.com/oauth/authorize?${params}`);
+});
+
+// GET /api/billing/connect/callback — Stripe OAuth redirect
+router.get('/connect/callback', async (req, res) => {
+  const { code, state, error } = req.query;
+  if (error) return res.redirect('/admin?connect_error=1');
+  let shopId;
+  try {
+    shopId = parseInt(Buffer.from(state, 'base64').toString(), 10);
+    if (!shopId) throw new Error('invalid state');
+  } catch { return res.redirect('/admin?connect_error=1'); }
+  try {
+    const response = await stripe.oauth.token({ grant_type: 'authorization_code', code });
+    await pool.query('UPDATE shops SET stripe_connect_account_id=$1 WHERE id=$2', [response.stripe_user_id, shopId]);
+    res.redirect('/admin?connected=1');
+  } catch (err) {
+    console.error('Stripe Connect callback error:', err);
+    res.redirect('/admin?connect_error=1');
+  }
+});
+
+// POST /api/billing/disconnect — deauthorize Stripe Connect account
+router.post('/disconnect', requireAdmin, async (req, res) => {
+  if (!stripe) return res.status(503).json({ error: 'Stripe not configured' });
+  try {
+    const { rows } = await pool.query('SELECT stripe_connect_account_id FROM shops WHERE id=$1', [req.shopId]);
+    const acct = rows[0]?.stripe_connect_account_id;
+    if (acct && process.env.STRIPE_CONNECT_CLIENT_ID) {
+      await stripe.oauth.deauthorize({ client_id: process.env.STRIPE_CONNECT_CLIENT_ID, stripe_user_id: acct });
+    }
+    await pool.query('UPDATE shops SET stripe_connect_account_id=NULL WHERE id=$1', [req.shopId]);
+    res.json({ success: true });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
 module.exports = router;

@@ -122,6 +122,9 @@ async function initDB() {
       )
     `);
 
+    // Add stripe_connect_account_id to shops for Stripe Connect (per-shop payouts)
+    await client.query(`ALTER TABLE shops ADD COLUMN IF NOT EXISTS stripe_connect_account_id TEXT`);
+
     // ── Idempotent migrations for existing installs ───────────────────────
     await client.query(`ALTER TABLE admin_users ADD COLUMN IF NOT EXISTS name VARCHAR(100) DEFAULT 'Admin'`);
     await client.query(`ALTER TABLE admin_users ADD COLUMN IF NOT EXISTS email VARCHAR(100)`);

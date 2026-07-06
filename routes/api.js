@@ -38,12 +38,27 @@ router.post('/create-payment-intent', async (req, res) => {
   const amount = parseFloat(req.body.amount);
   if (!amount || amount <= 0) return res.status(400).json({ error: 'Invalid amount' });
   try {
-    const pi = await stripeClient.paymentIntents.create({
+    // Route payment to shop's connected Stripe account if one is linked
+    const shopId = await resolveShop(req.body.shop_slug || req.query.shop);
+    let connectedAccountId = null;
+    if (shopId) {
+      const shopR = await pool.query('SELECT stripe_connect_account_id FROM shops WHERE id=$1', [shopId]);
+      connectedAccountId = shopR.rows[0]?.stripe_connect_account_id || null;
+    }
+
+    const piParams = {
       amount: Math.round(amount * 100),
       currency: 'usd',
       description: req.body.description || 'Appointment payment',
       automatic_payment_methods: { enabled: true },
-    });
+    };
+
+    if (connectedAccountId) {
+      piParams.on_behalf_of  = connectedAccountId;
+      piParams.transfer_data = { destination: connectedAccountId };
+    }
+
+    const pi = await stripeClient.paymentIntents.create(piParams);
     res.json({ client_secret: pi.client_secret });
   } catch (err) { res.status(500).json({ error: err.message }); }
 });

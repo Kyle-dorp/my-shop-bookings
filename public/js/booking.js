@@ -466,6 +466,7 @@ async function initStripePayment() {
       headers: {'Content-Type':'application/json'},
       body: JSON.stringify({
         amount: chargeAmount,
+        shop_slug: shopSlug || undefined,
         description: isFullPay
           ? `Full payment — ${state.service.name} for ${state.customerInfo.name}`
           : `Deposit — ${state.service.name} for ${state.customerInfo.name}`,
