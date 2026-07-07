@@ -125,6 +125,15 @@ async function initDB() {
     // Add stripe_connect_account_id to shops for Stripe Connect (per-shop payouts)
     await client.query(`ALTER TABLE shops ADD COLUMN IF NOT EXISTS stripe_connect_account_id TEXT`);
 
+    // Add custom_domain to shops for white-label booking URLs
+    await client.query(`ALTER TABLE shops ADD COLUMN IF NOT EXISTS custom_domain TEXT`);
+    await client.query(`
+      DO $$ BEGIN
+        BEGIN CREATE UNIQUE INDEX shops_custom_domain_unique ON shops (custom_domain) WHERE custom_domain IS NOT NULL;
+        EXCEPTION WHEN OTHERS THEN NULL; END;
+      END $$
+    `);
+
     // ── Idempotent migrations for existing installs ───────────────────────
     await client.query(`ALTER TABLE admin_users ADD COLUMN IF NOT EXISTS name VARCHAR(100) DEFAULT 'Admin'`);
     await client.query(`ALTER TABLE admin_users ADD COLUMN IF NOT EXISTS email VARCHAR(100)`);

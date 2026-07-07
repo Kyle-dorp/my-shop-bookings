@@ -254,7 +254,7 @@ router.get('/settings', async (req, res) => {
   try {
     const [settingsR, shopR] = await Promise.all([
       pool.query('SELECT key, value FROM settings WHERE shop_id=$1', [req.shopId]),
-      pool.query('SELECT stripe_connect_account_id FROM shops WHERE id=$1', [req.shopId]),
+      pool.query('SELECT stripe_connect_account_id, custom_domain FROM shops WHERE id=$1', [req.shopId]),
     ]);
     const s = {};
     settingsR.rows.forEach(row => s[row.key] = row.value);
@@ -264,6 +264,7 @@ router.get('/settings', async (req, res) => {
     s.stripe_test_mode       = sk.startsWith('sk_test_') || pk.startsWith('pk_test_');
     s.stripe_connect_enabled = !!process.env.STRIPE_CONNECT_CLIENT_ID;
     s.stripe_connect_status  = shopR.rows[0]?.stripe_connect_account_id ? 'connected' : 'not_connected';
+    s.custom_domain          = shopR.rows[0]?.custom_domain || '';
     res.json(s);
   } catch { res.status(500).json({ error: 'Server error' }); }
 });
@@ -319,6 +320,24 @@ router.put('/profile', async (req, res) => {
     );
     res.json({ success: true });
   } catch { res.status(500).json({ error: 'Server error' }); }
+});
+
+// --- Custom Domain ---
+router.put('/domain', async (req, res) => {
+  let domain = (req.body.custom_domain || '').trim().toLowerCase()
+    .replace(/^(https?:\/\/)+/, '')
+    .replace(/^www\./, '')
+    .replace(/\/.*$/, '');
+  if (domain && !/^[a-z0-9][a-z0-9.-]*\.[a-z]{2,}$/.test(domain)) {
+    return res.status(400).json({ error: 'Invalid domain — use format: bookings.yourshop.com' });
+  }
+  try {
+    await pool.query('UPDATE shops SET custom_domain=$1 WHERE id=$2', [domain || null, req.shopId]);
+    res.json({ success: true, custom_domain: domain || null });
+  } catch (err) {
+    if (err.code === '23505') return res.status(400).json({ error: 'That domain is already registered to another shop' });
+    res.status(500).json({ error: 'Server error' });
+  }
 });
 
 // --- Password ---

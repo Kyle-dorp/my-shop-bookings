@@ -394,6 +394,13 @@ async function loadSettings() {
   document.getElementById('allowGuest').checked   = data.allow_guest !== 'false';
   toggleLoginSettings();
 
+  // Custom domain
+  const domainEl = document.getElementById('customDomain');
+  const removeBtn = document.getElementById('removeDomainBtn');
+  if (domainEl) domainEl.value = data.custom_domain || '';
+  if (removeBtn) removeBtn.style.display = data.custom_domain ? '' : 'none';
+  if (data.custom_domain) renderDomainInstructions(data.custom_domain);
+
   // Stripe Connect payout card
   renderStripeConnect(data);
 
@@ -446,6 +453,45 @@ async function loadSettings() {
         </div>
       </div>`;
   }
+}
+
+async function saveDomain() {
+  const val = document.getElementById('customDomain').value.trim();
+  try {
+    const r = await fetch('/api/admin/domain', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ custom_domain: val }),
+    });
+    const d = await r.json();
+    if (!r.ok) { showToast(d.error || 'Save failed', 'error'); return; }
+    const removeBtn = document.getElementById('removeDomainBtn');
+    if (removeBtn) removeBtn.style.display = val ? '' : 'none';
+    if (val) { renderDomainInstructions(d.custom_domain || val); showToast('Domain saved!'); }
+    else { document.getElementById('domainInstructions').style.display = 'none'; showToast('Domain removed.'); }
+  } catch { showToast('Network error', 'error'); }
+}
+
+async function removeDomain() {
+  document.getElementById('customDomain').value = '';
+  await saveDomain();
+}
+
+function renderDomainInstructions(domain) {
+  const el = document.getElementById('domainInstructions');
+  if (!el) return;
+  el.style.display = '';
+  el.innerHTML = `
+    <div style="padding:.9rem 1rem;background:rgba(46,204,113,.06);border:1px solid rgba(46,204,113,.18);border-radius:10px;font-size:.8rem">
+      <div style="font-weight:700;color:#2ecc71;margin-bottom:.6rem">✓ Domain saved — point your DNS to activate it:</div>
+      <div style="display:grid;grid-template-columns:60px 1fr 1fr;gap:.25rem .75rem;font-size:.77rem;margin-bottom:.6rem">
+        <span style="color:#666;font-weight:700">Type</span><span style="color:#666;font-weight:700">Name / Host</span><span style="color:#666;font-weight:700">Value / Points to</span>
+        <code style="color:#c8a96e">CNAME</code>
+        <code style="color:#ccc;word-break:break-all">${esc(domain)}</code>
+        <code style="color:#ccc;word-break:break-all">my-shop-bookings-production.up.railway.app</code>
+      </div>
+      <p style="margin:0;color:#888;font-size:.76rem">Add this record in your domain registrar (GoDaddy, Namecheap, Google Domains, etc.). For automatic HTTPS, run your domain through <strong style="color:#ccc">Cloudflare</strong> (free) — enable the orange proxy cloud and SSL handles itself. DNS changes take 5–30 min to propagate.</p>
+    </div>`;
 }
 
 function renderStripeConnect(data) {

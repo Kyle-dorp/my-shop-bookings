@@ -8,8 +8,15 @@ const stripeClient = process.env.STRIPE_SECRET_KEY
 function timeToMinutes(t) { const [h,m] = t.split(':').map(Number); return h*60+m; }
 function minutesToTime(mins) { return `${String(Math.floor(mins/60)).padStart(2,'0')}:${String(mins%60).padStart(2,'0')}`; }
 
-// Resolve shop slug → shop id.  '' or 'default' → first shop (backward compat).
-async function resolveShop(slug) {
+// Resolve shop: custom domain → slug → first shop (backward compat).
+async function resolveShop(slug, host) {
+  if (host) {
+    const hostname = host.split(':')[0].replace(/^www\./i, '').toLowerCase();
+    if (!hostname.endsWith('.railway.app') && hostname !== 'localhost' && !/^\d+\.\d+\.\d+\.\d+$/.test(hostname)) {
+      const r = await pool.query('SELECT id FROM shops WHERE custom_domain=$1', [hostname]);
+      if (r.rows[0]) return r.rows[0].id;
+    }
+  }
   if (!slug || slug === 'default') {
     const r = await pool.query('SELECT id FROM shops ORDER BY id LIMIT 1');
     return r.rows[0]?.id || 1;
@@ -21,7 +28,7 @@ async function resolveShop(slug) {
 // GET /api/settings
 router.get('/settings', async (req, res) => {
   try {
-    const shopId = await resolveShop(req.query.shop);
+    const shopId = await resolveShop(req.query.shop, req.headers.host);
     if (!shopId) return res.json({ max_booking_days:60, payment_mode:'in_person', deposit_required:'false', deposit_amount:'10' });
     const r = await pool.query('SELECT key, value FROM settings WHERE shop_id=$1', [shopId]);
     const s = { max_booking_days:60, payment_mode:'in_person', deposit_required:'false', deposit_amount:'10', require_login:'false', allow_guest:'true' };
@@ -39,7 +46,7 @@ router.post('/create-payment-intent', async (req, res) => {
   if (!amount || amount <= 0) return res.status(400).json({ error: 'Invalid amount' });
   try {
     // Route payment to shop's connected Stripe account if one is linked
-    const shopId = await resolveShop(req.body.shop_slug || req.query.shop);
+    const shopId = await resolveShop(req.body.shop_slug || req.query.shop, req.headers.host);
     let connectedAccountId = null;
     if (shopId) {
       const shopR = await pool.query('SELECT stripe_connect_account_id FROM shops WHERE id=$1', [shopId]);
@@ -66,7 +73,7 @@ router.post('/create-payment-intent', async (req, res) => {
 // GET /api/services
 router.get('/services', async (req, res) => {
   try {
-    const shopId = await resolveShop(req.query.shop);
+    const shopId = await resolveShop(req.query.shop, req.headers.host);
     if (!shopId) return res.json([]);
     const r = await pool.query(
       'SELECT id, name, duration_minutes, price FROM services WHERE active=true AND shop_id=$1 ORDER BY display_order, name',
@@ -81,7 +88,7 @@ router.get('/slots', async (req, res) => {
   const { date, service_id, shop } = req.query;
   if (!date || !service_id) return res.status(400).json({ error: 'Missing date or service_id' });
   try {
-    const shopId = await resolveShop(shop);
+    const shopId = await resolveShop(shop, req.headers.host);
     if (!shopId) return res.status(404).json({ error: 'Shop not found' });
 
     const svcR = await pool.query(
@@ -143,7 +150,7 @@ router.post('/bookings', async (req, res) => {
   if (!phoneClean && !emailClean) return res.status(400).json({ error: 'Please provide a phone number or email address' });
 
   try {
-    const shopId = await resolveShop(shop_slug || req.query.shop);
+    const shopId = await resolveShop(shop_slug || req.query.shop, req.headers.host);
     if (!shopId) return res.status(404).json({ error: 'Shop not found' });
 
     const svcR = await pool.query(
