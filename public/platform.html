@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Platform Admin</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #07090e;
+      --surface: #0e1219;
+      --surface2: #141920;
+      --border: rgba(255,255,255,0.07);
+      --text: #e2e4e7;
+      --muted: #6b7280;
+      --mid: #9ca3af;
+      --gold: #c8a96e;
+      --green: #2ecc71;
+      --red: #e74c3c;
+      --blue: #3b82f6;
+    }
+    body { font-family:'Inter',system-ui,sans-serif; background:var(--bg); color:var(--text); min-height:100vh; }
+
+    /* ── Login ─────────────────────────────────────────────────────── */
+    #platLogin {
+      min-height: 100vh; display: flex; align-items: center; justify-content: center;
+      background: radial-gradient(ellipse 60% 40% at 50% 0%, rgba(59,130,246,.08), transparent);
+    }
+    .login-box {
+      width: min(380px,90vw);
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 2.25rem 2rem;
+      box-shadow: 0 20px 60px rgba(0,0,0,.4);
+    }
+    .login-icon { font-size: 2rem; text-align: center; margin-bottom: .75rem; }
+    .login-title { font-size: 1.3rem; font-weight: 800; letter-spacing: -.03em; text-align: center; margin-bottom: .35rem; }
+    .login-sub { font-size: .8rem; color: var(--muted); text-align: center; margin-bottom: 1.75rem; }
+    .login-box input[type="password"] {
+      width: 100%; padding: .7rem .9rem;
+      background: var(--surface2); border: 1px solid var(--border);
+      border-radius: 9px; color: var(--text); font-size: .9rem; font-family: inherit;
+      margin-bottom: .75rem; outline: none; transition: border-color .15s;
+    }
+    .login-box input:focus { border-color: rgba(59,130,246,.4); }
+    .login-box button[type="submit"] {
+      width: 100%; padding: .75rem;
+      background: var(--blue); color: #fff; font-size: .9rem; font-weight: 700;
+      border: none; border-radius: 9px; cursor: pointer; font-family: inherit;
+      transition: filter .15s;
+    }
+    .login-box button[type="submit"]:hover { filter: brightness(1.1); }
+    #platErr { font-size: .8rem; color: var(--red); text-align: center; margin-top: .6rem; min-height: 1.2em; }
+
+    /* ── Dashboard ─────────────────────────────────────────────────── */
+    #platDash { display: none; flex-direction: column; min-height: 100vh; }
+
+    header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 2rem; height: 62px;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      position: sticky; top: 0; z-index: 10;
+    }
+    .header-brand { font-size: 1rem; font-weight: 800; letter-spacing: -.02em; display: flex; align-items: center; gap: .6rem; }
+    .header-brand-badge {
+      font-size: .65rem; font-weight: 800; padding: .15rem .45rem;
+      background: rgba(59,130,246,.15); border: 1px solid rgba(59,130,246,.3);
+      border-radius: 4px; color: var(--blue); letter-spacing: .06em; text-transform: uppercase;
+    }
+    .logout-btn {
+      padding: .45rem 1rem; background: transparent; border: 1px solid var(--border);
+      color: var(--mid); font-size: .82rem; font-weight: 600;
+      border-radius: 8px; cursor: pointer; font-family: inherit; transition: all .15s;
+    }
+    .logout-btn:hover { border-color: var(--red); color: var(--red); }
+
+    /* Stats row */
+    .stats-row {
+      display: flex; gap: 1rem; flex-wrap: wrap;
+      padding: 1.5rem 2rem;
+    }
+    .stat-card {
+      flex: 1; min-width: 140px;
+      padding: 1.25rem 1.5rem;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+    }
+    .stat-val { font-size: 2rem; font-weight: 800; letter-spacing: -.04em; line-height: 1; }
+    .stat-label { font-size: .78rem; color: var(--muted); margin-top: .4rem; font-weight: 500; }
+
+    /* Shops section */
+    .section-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 2rem 1rem;
+    }
+    .section-title { font-size: 1.05rem; font-weight: 700; }
+    .refresh-btn {
+      padding: .4rem .9rem; background: transparent; border: 1px solid var(--border);
+      color: var(--mid); font-size: .8rem; font-weight: 600; border-radius: 8px;
+      cursor: pointer; font-family: inherit; transition: all .15s;
+    }
+    .refresh-btn:hover { border-color: rgba(255,255,255,.2); color: var(--text); }
+
+    .table-wrap {
+      margin: 0 2rem 2rem;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      overflow: hidden;
+    }
+    table { width: 100%; border-collapse: collapse; font-size: .83rem; }
+    thead th {
+      padding: .75rem 1rem; text-align: left;
+      font-size: .7rem; font-weight: 700; letter-spacing: .07em; text-transform: uppercase;
+      color: var(--muted); border-bottom: 1px solid var(--border);
+      background: var(--surface2);
+    }
+    tbody tr { border-bottom: 1px solid var(--border); transition: background .1s; }
+    tbody tr:last-child { border-bottom: none; }
+    tbody tr:hover { background: rgba(255,255,255,.02); }
+    td { padding: .85rem 1rem; vertical-align: middle; }
+    td.muted { color: var(--muted); font-size: .78rem; }
+
+    .shop-name { font-weight: 700; }
+    .shop-slug { font-size: .75rem; color: var(--muted); margin-top: .1rem; }
+
+    .status-badge {
+      display: inline-flex; align-items: center; gap: .35rem;
+      padding: .25rem .65rem; border-radius: 999px;
+      font-size: .72rem; font-weight: 700; letter-spacing: .03em;
+    }
+    .status-active    { background: rgba(46,204,113,.12); color: #2ecc71; border: 1px solid rgba(46,204,113,.25); }
+    .status-trialing  { background: rgba(59,130,246,.12); color: var(--blue); border: 1px solid rgba(59,130,246,.25); }
+    .status-inactive  { background: rgba(107,114,128,.12); color: var(--muted); border: 1px solid rgba(107,114,128,.25); }
+    .status-cancelled { background: rgba(231,76,60,.12); color: var(--red); border: 1px solid rgba(231,76,60,.25); }
+
+    .actions-cell { display: flex; gap: .4rem; flex-wrap: wrap; }
+    .act-btn {
+      padding: .3rem .7rem; border-radius: 6px; font-size: .74rem; font-weight: 700;
+      border: 1px solid; cursor: pointer; font-family: inherit; transition: all .15s;
+      text-decoration: none; display: inline-block;
+    }
+    .act-activate   { border-color: rgba(46,204,113,.4); color: #2ecc71; background: rgba(46,204,113,.07); }
+    .act-activate:hover { background: rgba(46,204,113,.14); }
+    .act-deactivate { border-color: rgba(107,114,128,.4); color: var(--muted); background: transparent; }
+    .act-deactivate:hover { border-color: rgba(231,76,60,.4); color: var(--red); }
+    .act-view       { border-color: var(--border); color: var(--mid); background: transparent; }
+    .act-view:hover { border-color: rgba(255,255,255,.25); color: var(--text); }
+
+    .connected-dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; }
+    .dot-yes { background: var(--green); }
+    .dot-no  { background: var(--border); }
+
+    #loadingMsg { padding: 2rem; text-align: center; color: var(--muted); font-size: .875rem; }
+
+    .env-notice {
+      margin: 1rem 2rem;
+      padding: .85rem 1rem;
+      background: rgba(231,76,60,.06);
+      border: 1px solid rgba(231,76,60,.2);
+      border-radius: 10px;
+      font-size: .82rem;
+      color: #e07070;
+    }
+    .env-notice strong { color: var(--red); }
+    code { font-size: .75rem; background: rgba(0,0,0,.25); padding: .1rem .3rem; border-radius: 4px; color: #ccc; }
+
+    @media (max-width: 768px) {
+      .stats-row { padding: 1rem; }
+      .section-header, .table-wrap { margin-left: 1rem; margin-right: 1rem; }
+      thead th:nth-child(n+5) { display: none; }
+      td:nth-child(n+5) { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ── Login ──────────────────────────────────────────────────────── -->
+<div id="platLogin">
+  <div class="login-box">
+    <div class="login-icon">⚙</div>
+    <div class="login-title">Platform Admin</div>
+    <div class="login-sub">Internal access only &mdash; not for shop managers</div>
+    <form onsubmit="platLogin(event)">
+      <input type="password" id="platPw" placeholder="Platform password" autocomplete="current-password" required>
+      <button type="submit">Sign In</button>
+    </form>
+    <div id="platErr"></div>
+  </div>
+</div>
+
+<!-- ── Dashboard ──────────────────────────────────────────────────── -->
+<div id="platDash">
+
+  <header>
+    <div class="header-brand">
+      ⚙ Platform Admin
+      <span class="header-brand-badge">Internal</span>
+    </div>
+    <button class="logout-btn" onclick="platLogout()">Sign out</button>
+  </header>
+
+  <div id="envNotice" style="display:none" class="env-notice">
+    <strong>⚠ PLATFORM_PASSWORD not set.</strong> Add it to Railway env vars to secure this page — currently anyone can access it!
+  </div>
+
+  <!-- Stats -->
+  <div class="stats-row">
+    <div class="stat-card">
+      <div class="stat-val" id="statTotal">—</div>
+      <div class="stat-label">Total Shops</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-val" style="color:var(--green)" id="statActive">—</div>
+      <div class="stat-label">Active Subscriptions</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-val" style="color:var(--blue)" id="statTrialing">—</div>
+      <div class="stat-label">Trialing</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-val" style="color:var(--gold)" id="statMRR">—</div>
+      <div class="stat-label">MRR (est.)</div>
+    </div>
+  </div>
+
+  <!-- Shops table -->
+  <div class="section-header">
+    <div class="section-title">All Shops</div>
+    <button class="refresh-btn" onclick="loadShops()">↻ Refresh</button>
+  </div>
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Shop</th>
+          <th>Owner</th>
+          <th>Subscription</th>
+          <th>Upcoming Appts</th>
+          <th>Stripe Connect</th>
+          <th>Custom Domain</th>
+          <th>Joined</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody id="shopsBody">
+        <tr><td colspan="8" id="loadingMsg">Loading…</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+
+async function platLogin(e) {
+  e.preventDefault();
+  const pw = $('platPw').value;
+  const errEl = $('platErr');
+  errEl.textContent = '';
+  try {
+    const r = await fetch('/api/platform/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password: pw }),
+    });
+    const d = await r.json();
+    if (!r.ok) { errEl.textContent = d.error || 'Login failed'; return; }
+    showDash();
+  } catch { errEl.textContent = 'Network error'; }
+}
+
+async function platLogout() {
+  await fetch('/api/platform/logout', { method: 'POST' });
+  $('platLogin').style.display = 'flex';
+  $('platDash').style.display = 'none';
+  $('platPw').value = '';
+}
+
+async function showDash() {
+  $('platLogin').style.display = 'none';
+  $('platDash').style.display = 'flex';
+  await Promise.all([loadStats(), loadShops()]);
+}
+
+async function loadStats() {
+  try {
+    const r = await fetch('/api/platform/stats');
+    if (!r.ok) return;
+    const d = await r.json();
+    $('statTotal').textContent   = d.total_shops    || 0;
+    $('statActive').textContent  = d.active_shops   || 0;
+    $('statTrialing').textContent= d.trialing_shops || 0;
+    $('statMRR').textContent     = '$' + ((parseInt(d.active_shops) || 0) * 15).toLocaleString();
+  } catch {}
+}
+
+async function loadShops() {
+  const tbody = $('shopsBody');
+  tbody.innerHTML = '<tr><td colspan="8" style="padding:2rem;text-align:center;color:#6b7280">Loading…</td></tr>';
+  try {
+    const r = await fetch('/api/platform/shops');
+    if (r.status === 401) { platLogout(); return; }
+    const shops = await r.json();
+    if (!shops.length) {
+      tbody.innerHTML = '<tr><td colspan="8" style="padding:2rem;text-align:center;color:#6b7280">No shops yet.</td></tr>';
+      return;
+    }
+    tbody.innerHTML = shops.map(s => shopRow(s)).join('');
+  } catch (err) {
+    tbody.innerHTML = `<tr><td colspan="8" style="padding:2rem;text-align:center;color:#e74c3c">Error: ${esc(err.message)}</td></tr>`;
+  }
+}
+
+function shopRow(s) {
+  const status = s.subscription_status || 'inactive';
+  const statusLabels = { active:'Active', trialing:'Trialing', inactive:'Inactive', cancelled:'Cancelled' };
+  const badgeClass = `status-badge status-${status}`;
+
+  const joined = s.created_at ? new Date(s.created_at).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}) : '—';
+  const bookingUrl = `${window.location.origin}/${esc(s.slug)}`;
+
+  const actions = [];
+  if (status !== 'active') {
+    actions.push(`<button class="act-btn act-activate" onclick="setStatus(${s.id},'active')">Activate</button>`);
+  }
+  if (status === 'active' || status === 'trialing') {
+    actions.push(`<button class="act-btn act-deactivate" onclick="setStatus(${s.id},'inactive')">Deactivate</button>`);
+  }
+  actions.push(`<a class="act-btn act-view" href="${bookingUrl}" target="_blank">View →</a>`);
+
+  return `<tr id="shop-${s.id}">
+    <td>
+      <div class="shop-name">${esc(s.name)}</div>
+      <div class="shop-slug">/${esc(s.slug)}</div>
+    </td>
+    <td>
+      <div style="font-size:.82rem">${esc(s.owner_name || '—')}</div>
+      <div style="font-size:.75rem;color:var(--muted)">${esc(s.owner_email || '—')}</div>
+    </td>
+    <td><span class="${badgeClass}">${statusLabels[status] || status}</span></td>
+    <td class="muted">${s.upcoming_appts || 0} upcoming<br><span style="font-size:.72rem">(${s.total_appts || 0} total)</span></td>
+    <td>
+      <span class="connected-dot ${s.stripe_connect_account_id ? 'dot-yes' : 'dot-no'}"></span>
+      ${s.stripe_connect_account_id ? '<span style="color:var(--green);font-size:.78rem"> Connected</span>' : '<span style="color:var(--muted);font-size:.78rem"> Not connected</span>'}
+    </td>
+    <td class="muted">${s.custom_domain ? `<code>${esc(s.custom_domain)}</code>` : '—'}</td>
+    <td class="muted">${joined}</td>
+    <td><div class="actions-cell">${actions.join('')}</div></td>
+  </tr>`;
+}
+
+async function setStatus(id, status) {
+  const labels = { active:'Activate', inactive:'Deactivate', cancelled:'Cancel' };
+  if (!confirm(`${labels[status] || status} this shop's subscription?`)) return;
+  try {
+    const r = await fetch(`/api/platform/shops/${id}/status`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status }),
+    });
+    if (!r.ok) { const d = await r.json(); alert(d.error || 'Failed'); return; }
+    await Promise.all([loadStats(), loadShops()]);
+  } catch (err) { alert('Error: ' + err.message); }
+}
+
+function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+// Auto-check auth on load
+(async () => {
+  try {
+    const r = await fetch('/api/platform/auth');
+    const d = await r.json();
+    if (d.authenticated) {
+      showDash();
+    }
+    // Check if PLATFORM_PASSWORD is missing (503 = not configured)
+    const loginTest = await fetch('/api/platform/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password: '__probe__' }),
+    });
+    if (loginTest.status === 503) {
+      $('envNotice').style.display = 'block';
+    }
+  } catch {}
+})();
+</script>
+
+</body>
+</html>

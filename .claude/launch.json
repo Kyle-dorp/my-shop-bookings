@@ -5,7 +5,7 @@
       "name": "haircut-scheduler",
       "runtimeExecutable": "node",
       "runtimeArgs": ["server.js"],
-      "port": 3000
+      "autoPort": true
     }
   ]
 }

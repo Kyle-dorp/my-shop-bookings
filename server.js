@@ -73,6 +73,7 @@ app.use('/api', require('./routes/api'));
 app.use('/api/admin', require('./routes/admin-api'));
 app.use('/api/billing', require('./routes/billing'));
 app.use('/api/auth', require('./routes/user-auth'));
+app.use('/api/platform', require('./routes/platform-api'));
 
 // ── Google OAuth ──────────────────────────────────────────────────────
 app.get('/auth/google', (req, res) => {
@@ -137,8 +138,16 @@ app.get('/auth/google/callback', async (req, res) => {
   }
 });
 
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'landing.html'));
+});
+
 app.get('/admin', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'admin.html'));
+});
+
+app.get('/platform', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'platform.html'));
 });
 
 app.use((req, res) => {

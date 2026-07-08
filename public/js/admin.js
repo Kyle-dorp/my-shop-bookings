@@ -605,7 +605,7 @@ function updateProfileHero(name) {
   const avatar = document.getElementById('profileHeroAvatar');
   const nameEl = document.getElementById('profileHeroName');
   if (avatar) avatar.textContent = (name || 'A')[0].toUpperCase();
-  if (nameEl) nameEl.textContent = name || 'Admin';
+  if (nameEl) nameEl.textContent = name || 'Manager';
 }
 
 async function loadAccount() {

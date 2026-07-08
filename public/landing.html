@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BarberBook — Online booking for barbershops</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --gold: #c8a96e;
+      --gold-light: #e0c99a;
+      --bg: #05080f;
+      --surface: rgba(255,255,255,0.04);
+      --border: rgba(255,255,255,0.08);
+      --text: #e2e4e7;
+      --muted: #6b7280;
+      --mid: #9ca3af;
+    }
+    html { scroll-behavior: smooth; }
+    body { font-family: 'Inter', system-ui, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+    a { text-decoration: none; color: inherit; }
+
+    /* ── Nav ────────────────────────────────────────── */
+    nav {
+      position: sticky; top: 0; z-index: 100;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 clamp(1.25rem, 5vw, 4rem);
+      height: 68px;
+      background: rgba(5,8,15,0.86);
+      backdrop-filter: blur(18px);
+      border-bottom: 1px solid var(--border);
+    }
+    .nav-logo { font-size: 1.1rem; font-weight: 800; letter-spacing: -.02em; color: var(--gold); }
+    .nav-logo span { color: var(--text); }
+    .nav-links { display: flex; align-items: center; gap: 1rem; }
+    .nav-link { font-size: .85rem; font-weight: 600; color: var(--mid); padding: .4rem .75rem; border-radius: 8px; transition: color .15s; }
+    .nav-link:hover { color: var(--text); }
+    .nav-cta { font-size: .85rem; font-weight: 700; padding: .55rem 1.2rem; background: var(--gold); color: #1a1007; border-radius: 9px; transition: filter .15s; }
+    .nav-cta:hover { filter: brightness(1.1); }
+
+    /* ── Hero ───────────────────────────────────────── */
+    .hero {
+      min-height: 92vh; display: flex; flex-direction: column; align-items: center; justify-content: center;
+      text-align: center; padding: clamp(3rem, 8vw, 8rem) clamp(1.25rem, 5vw, 4rem);
+      background:
+        radial-gradient(ellipse 80% 50% at 50% -10%, rgba(200,169,110,.12), transparent),
+        radial-gradient(ellipse 60% 40% at 80% 80%, rgba(200,169,110,.05), transparent);
+    }
+    .hero-badge {
+      display: inline-flex; align-items: center; gap: .5rem;
+      padding: .4rem 1rem; border: 1px solid rgba(200,169,110,.3);
+      border-radius: 999px; font-size: .78rem; font-weight: 700;
+      color: var(--gold); background: rgba(200,169,110,.07);
+      margin-bottom: 2rem; letter-spacing: .04em;
+    }
+    .hero h1 {
+      font-size: clamp(2.8rem, 7vw, 5.5rem);
+      font-weight: 900; line-height: 1.02; letter-spacing: -.04em;
+      color: #fff; max-width: 900px;
+    }
+    .hero h1 em { font-style: normal; color: var(--gold); }
+    .hero-sub {
+      margin: 1.5rem auto 0; max-width: 560px;
+      font-size: clamp(1rem, 2.5vw, 1.2rem); line-height: 1.65;
+      color: var(--mid); font-weight: 400;
+    }
+    .hero-cta { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; margin-top: 2.5rem; }
+    .btn-primary {
+      display: inline-flex; align-items: center; gap: .4rem;
+      padding: .85rem 1.75rem; background: var(--gold); color: #1a1007;
+      font-size: 1rem; font-weight: 800; border-radius: 11px;
+      transition: filter .15s, transform .15s; letter-spacing: -.01em;
+    }
+    .btn-primary:hover { filter: brightness(1.08); transform: translateY(-1px); }
+    .btn-ghost {
+      display: inline-flex; align-items: center; gap: .4rem;
+      padding: .85rem 1.75rem; border: 1px solid var(--border);
+      color: var(--mid); font-size: 1rem; font-weight: 600;
+      border-radius: 11px; transition: border-color .15s, color .15s;
+    }
+    .btn-ghost:hover { border-color: rgba(255,255,255,.2); color: var(--text); }
+    .hero-note { margin-top: 1.25rem; font-size: .8rem; color: var(--muted); }
+
+    /* ── Mockup strip ───────────────────────────────── */
+    .mockup-strip {
+      padding: 0 clamp(1.25rem, 5vw, 4rem) 5rem;
+      display: flex; justify-content: center;
+    }
+    .mockup-frame {
+      width: min(760px, 100%);
+      background: rgba(255,255,255,.03);
+      border: 1px solid var(--border);
+      border-radius: 18px; overflow: hidden;
+      box-shadow: 0 40px 100px rgba(0,0,0,.5);
+    }
+    .mockup-bar { height: 36px; background: rgba(255,255,255,.04); border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 6px; padding: 0 14px; }
+    .mockup-dot { width: 10px; height: 10px; border-radius: 50%; }
+    .mockup-body { padding: 2rem; }
+    .mock-brand { text-align: center; margin-bottom: 1.5rem; }
+    .mock-brand-name { font-size: 1.1rem; font-weight: 800; color: var(--gold); }
+    .mock-brand-tag { font-size: .75rem; color: var(--muted); margin-top: .25rem; }
+    .mock-steps { display: flex; justify-content: center; gap: .5rem; margin-bottom: 1.5rem; }
+    .mock-dot { width: 10px; height: 10px; border-radius: 50%; background: rgba(255,255,255,.12); }
+    .mock-dot.active { background: var(--gold); }
+    .mock-services { display: grid; grid-template-columns: repeat(3, 1fr); gap: .75rem; }
+    .mock-svc { padding: 1rem; border: 1px solid var(--border); border-radius: 10px; background: rgba(255,255,255,.03); }
+    .mock-svc-name { font-size: .8rem; font-weight: 700; color: var(--text); }
+    .mock-svc-dur { font-size: .72rem; color: var(--muted); margin-top: .2rem; }
+    .mock-svc-price { font-size: .8rem; font-weight: 700; color: var(--gold); margin-top: .35rem; }
+
+    /* ── Features ───────────────────────────────────── */
+    section { padding: 5rem clamp(1.25rem, 5vw, 4rem); }
+    .section-label { display: block; text-align: center; font-size: .72rem; font-weight: 800; letter-spacing: .16em; color: var(--gold); margin-bottom: .75rem; text-transform: uppercase; }
+    .section-title { text-align: center; font-size: clamp(1.75rem, 4vw, 2.75rem); font-weight: 800; letter-spacing: -.03em; color: #fff; }
+    .section-sub { text-align: center; color: var(--mid); font-size: 1rem; margin-top: .75rem; line-height: 1.6; }
+
+    .feature-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1.25rem; margin-top: 3rem; max-width: 1100px; margin-left: auto; margin-right: auto; }
+    .feature-card { padding: 1.75rem; background: var(--surface); border: 1px solid var(--border); border-radius: 16px; transition: border-color .2s; }
+    .feature-card:hover { border-color: rgba(200,169,110,.25); }
+    .feat-icon { font-size: 1.75rem; display: block; margin-bottom: 1rem; }
+    .feature-card h3 { font-size: 1rem; font-weight: 700; color: #fff; margin-bottom: .5rem; }
+    .feature-card p { font-size: .875rem; color: var(--mid); line-height: 1.65; }
+
+    /* ── How it works ───────────────────────────────── */
+    .how-section { background: rgba(255,255,255,.02); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+    .steps-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem; max-width: 900px; margin: 3rem auto 0; }
+    .step-card { text-align: center; }
+    .step-num { width: 48px; height: 48px; border-radius: 50%; background: rgba(200,169,110,.12); border: 1px solid rgba(200,169,110,.25); display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem; font-size: 1.1rem; font-weight: 800; color: var(--gold); }
+    .step-card h3 { font-size: .95rem; font-weight: 700; color: #fff; margin-bottom: .4rem; }
+    .step-card p { font-size: .82rem; color: var(--mid); line-height: 1.6; }
+
+    /* ── Pricing ────────────────────────────────────── */
+    .pricing-wrap { display: flex; justify-content: center; margin-top: 3rem; }
+    .price-card {
+      width: min(420px, 100%); padding: 2.5rem;
+      background: var(--surface); border: 1px solid rgba(200,169,110,.25);
+      border-radius: 20px;
+      box-shadow: 0 0 60px rgba(200,169,110,.07);
+    }
+    .price-name { font-size: .75rem; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; color: var(--gold); margin-bottom: .75rem; }
+    .price-amount { font-size: 3.5rem; font-weight: 900; letter-spacing: -.05em; color: #fff; line-height: 1; }
+    .price-amount span { font-size: 1.1rem; font-weight: 500; color: var(--muted); vertical-align: baseline; margin-left: .25rem; }
+    .price-desc { font-size: .875rem; color: var(--mid); margin: 1rem 0 1.5rem; line-height: 1.5; }
+    .price-divider { height: 1px; background: var(--border); margin: 1.5rem 0; }
+    .price-features { list-style: none; display: flex; flex-direction: column; gap: .75rem; margin-bottom: 2rem; }
+    .price-features li { display: flex; align-items: center; gap: .6rem; font-size: .88rem; color: var(--mid); }
+    .price-features li::before { content: '✓'; color: var(--gold); font-weight: 800; flex-shrink: 0; }
+    .price-card .btn-primary { width: 100%; justify-content: center; font-size: 1rem; }
+    .price-note { text-align: center; font-size: .78rem; color: var(--muted); margin-top: .85rem; }
+
+    /* ── Bottom CTA ─────────────────────────────────── */
+    .bottom-cta {
+      text-align: center;
+      background: radial-gradient(ellipse 70% 60% at 50% 50%, rgba(200,169,110,.08), transparent);
+      border-top: 1px solid var(--border);
+    }
+    .bottom-cta h2 { font-size: clamp(1.75rem, 4vw, 3rem); font-weight: 800; letter-spacing: -.04em; color: #fff; max-width: 700px; margin: 0 auto 1.5rem; }
+    .bottom-cta p { color: var(--mid); margin-bottom: 2rem; }
+
+    /* ── Footer ─────────────────────────────────────── */
+    footer {
+      padding: 2rem clamp(1.25rem, 5vw, 4rem);
+      border-top: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 1rem; flex-wrap: wrap;
+    }
+    footer p { font-size: .82rem; color: var(--muted); }
+    .footer-links { display: flex; gap: 1.25rem; }
+    .footer-links a { font-size: .82rem; color: var(--muted); transition: color .15s; }
+    .footer-links a:hover { color: var(--text); }
+
+    @media (max-width: 600px) {
+      .hero h1 { font-size: 2.4rem; }
+      .nav-links .nav-link { display: none; }
+      .mock-services { grid-template-columns: repeat(2, 1fr); }
+      footer { flex-direction: column; text-align: center; }
+    }
+  </style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-logo">&#9986; <span>BarberBook</span></div>
+  <div class="nav-links">
+    <a href="#features" class="nav-link">Features</a>
+    <a href="#pricing" class="nav-link">Pricing</a>
+    <a href="/admin" class="nav-link">Sign in</a>
+    <a href="/admin" class="nav-cta">Get started →</a>
+  </div>
+</nav>
+
+<!-- Hero -->
+<section class="hero">
+  <div class="hero-badge">&#9986; Built for barbershops</div>
+  <h1>Your shop,<br><em>online in minutes.</em></h1>
+  <p class="hero-sub">Appointment booking, Stripe payment collection, and a custom booking page — everything your barbershop needs, for $15/month.</p>
+  <div class="hero-cta">
+    <a href="/admin" class="btn-primary">Open your shop →</a>
+    <a href="/haircutsrus" class="btn-ghost">See live demo</a>
+  </div>
+  <p class="hero-note">No setup fee · Cancel anytime · Your own booking URL</p>
+</section>
+
+<!-- Booking page mockup -->
+<div class="mockup-strip">
+  <div class="mockup-frame">
+    <div class="mockup-bar">
+      <div class="mockup-dot" style="background:#ff5f57"></div>
+      <div class="mockup-dot" style="background:#febc2e"></div>
+      <div class="mockup-dot" style="background:#28c840"></div>
+    </div>
+    <div class="mockup-body">
+      <div class="mock-brand">
+        <div class="mock-brand-name">&#9986; Your Shop Name</div>
+        <div class="mock-brand-tag">Book Your Appointment Online</div>
+      </div>
+      <div class="mock-steps">
+        <div class="mock-dot active"></div>
+        <div class="mock-dot"></div>
+        <div class="mock-dot"></div>
+        <div class="mock-dot"></div>
+      </div>
+      <div class="mock-services">
+        <div class="mock-svc">
+          <div class="mock-svc-name">Fade</div>
+          <div class="mock-svc-dur">30 min</div>
+          <div class="mock-svc-price">$25</div>
+        </div>
+        <div class="mock-svc" style="border-color:rgba(200,169,110,.4);background:rgba(200,169,110,.05)">
+          <div class="mock-svc-name">Lineup</div>
+          <div class="mock-svc-dur">30 min</div>
+          <div class="mock-svc-price">$25</div>
+        </div>
+        <div class="mock-svc">
+          <div class="mock-svc-name">Custom Style</div>
+          <div class="mock-svc-dur">60 min</div>
+          <div class="mock-svc-price">$45</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Features -->
+<section id="features">
+  <span class="section-label">Everything you need</span>
+  <h2 class="section-title">One platform, all the tools</h2>
+  <div class="feature-grid">
+    <div class="feature-card">
+      <span class="feat-icon">📅</span>
+      <h3>Online booking, 24/7</h3>
+      <p>Customers book their own appointments any time. Automated time slots, real-time availability, and instant confirmation emails.</p>
+    </div>
+    <div class="feature-card">
+      <span class="feat-icon">💳</span>
+      <h3>Collect payments</h3>
+      <p>Charge deposits or full amounts at booking time through Stripe. Funds transfer directly to your bank account — not ours.</p>
+    </div>
+    <div class="feature-card">
+      <span class="feat-icon">🔗</span>
+      <h3>Your own booking URL</h3>
+      <p>Get a unique link like <strong style="color:var(--text)">oursite.com/yourshop</strong> the moment you sign up. Add a custom domain any time.</p>
+    </div>
+    <div class="feature-card">
+      <span class="feat-icon">⚡</span>
+      <h3>Manager dashboard</h3>
+      <p>Manage services, set hours, view appointments, and adjust settings from one clean panel. No training required.</p>
+    </div>
+  </div>
+</section>
+
+<!-- How it works -->
+<section class="how-section">
+  <span class="section-label">Setup in minutes</span>
+  <h2 class="section-title">How it works</h2>
+  <div class="steps-grid">
+    <div class="step-card">
+      <div class="step-num">1</div>
+      <h3>Create your account</h3>
+      <p>Sign up, choose your booking URL slug, and subscribe for $15/month.</p>
+    </div>
+    <div class="step-card">
+      <div class="step-num">2</div>
+      <h3>Add services &amp; hours</h3>
+      <p>Set up your services with prices, durations, and your weekly business hours.</p>
+    </div>
+    <div class="step-card">
+      <div class="step-num">3</div>
+      <h3>Share your link</h3>
+      <p>Post your booking page link anywhere — Instagram bio, Google Business, text messages.</p>
+    </div>
+  </div>
+</section>
+
+<!-- Pricing -->
+<section id="pricing">
+  <span class="section-label">Simple pricing</span>
+  <h2 class="section-title">One plan. Everything included.</h2>
+  <div class="pricing-wrap">
+    <div class="price-card">
+      <div class="price-name">Pro Shop</div>
+      <div class="price-amount">$15<span>/month</span></div>
+      <p class="price-desc">Everything you need to run your shop's bookings online. No hidden fees, no limits.</p>
+      <div class="price-divider"></div>
+      <ul class="price-features">
+        <li>Your own booking page URL</li>
+        <li>Unlimited appointments</li>
+        <li>Stripe payment collection (deposits &amp; full)</li>
+        <li>Custom domain support</li>
+        <li>Email confirmations for customers</li>
+        <li>Services &amp; hours management</li>
+        <li>Customer sign-in accounts</li>
+      </ul>
+      <a href="/admin" class="btn-primary">Get started →</a>
+      <p class="price-note">No setup fee · Cancel anytime</p>
+    </div>
+  </div>
+</section>
+
+<!-- Bottom CTA -->
+<section class="bottom-cta">
+  <h2>Ready to take your shop online?</h2>
+  <p>Join barbers who are already booking smarter.</p>
+  <a href="/admin" class="btn-primary" style="display:inline-flex">Open your shop for $15/month →</a>
+</section>
+
+<footer>
+  <p>&#9986; BarberBook &mdash; Professional booking for barbershops</p>
+  <div class="footer-links">
+    <a href="/admin">Manager sign in</a>
+    <a href="/haircutsrus">Live demo</a>
+  </div>
+</footer>
+
+</body>
+</html>
