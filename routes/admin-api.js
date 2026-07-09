@@ -111,12 +111,17 @@ router.get('/check-auth', async (req, res) => {
     );
     const status = rows[0]?.subscription_status || 'active';
     req.session.subscriptionStatus = status;
+    const platDomain = process.env.PLATFORM_DOMAIN;
+    const bookingUrl = platDomain
+      ? `https://${rows[0].slug}.${platDomain}`
+      : null;
     res.json({
-      authenticated:    true,
+      authenticated:      true,
       subscriptionActive: ['active','trialing'].includes(status),
       subscriptionStatus: status,
-      shopName: rows[0]?.name,
-      shopSlug: rows[0]?.slug,
+      shopName:  rows[0]?.name,
+      shopSlug:  rows[0]?.slug,
+      bookingUrl,
     });
   } catch {
     res.json({ authenticated: true, subscriptionActive: true, subscriptionStatus: 'active' });

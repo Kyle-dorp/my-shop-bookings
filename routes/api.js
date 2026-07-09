@@ -8,13 +8,24 @@ const stripeClient = process.env.STRIPE_SECRET_KEY
 function timeToMinutes(t) { const [h,m] = t.split(':').map(Number); return h*60+m; }
 function minutesToTime(mins) { return `${String(Math.floor(mins/60)).padStart(2,'0')}:${String(mins%60).padStart(2,'0')}`; }
 
-// Resolve shop: custom domain → slug → first shop (backward compat).
+// Resolve shop: custom domain → platform subdomain → slug param → first shop.
 async function resolveShop(slug, host) {
   if (host) {
     const hostname = host.split(':')[0].replace(/^www\./i, '').toLowerCase();
     if (!hostname.endsWith('.railway.app') && hostname !== 'localhost' && !/^\d+\.\d+\.\d+\.\d+$/.test(hostname)) {
+      // 1. Exact custom domain (e.g. bookings.joesbarbershop.com)
       const r = await pool.query('SELECT id FROM shops WHERE custom_domain=$1', [hostname]);
       if (r.rows[0]) return r.rows[0].id;
+
+      // 2. Platform subdomain (e.g. joes.barberbook.co → slug "joes")
+      const platDomain = process.env.PLATFORM_DOMAIN;
+      if (platDomain && hostname.endsWith('.' + platDomain)) {
+        const sub = hostname.slice(0, -(platDomain.length + 1));
+        if (sub) {
+          const r2 = await pool.query('SELECT id FROM shops WHERE slug=$1', [sub]);
+          if (r2.rows[0]) return r2.rows[0].id;
+        }
+      }
     }
   }
   if (!slug || slug === 'default') {

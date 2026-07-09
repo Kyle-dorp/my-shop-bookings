@@ -628,7 +628,7 @@ async function loadAccount() {
       statusEl.innerHTML = `<span class="sub-badge ${status}">${labels[status] || status}</span>`;
     }
     if (urlEl && auth.shopSlug) {
-      const url = `${window.location.origin}/${auth.shopSlug}`;
+      const url = auth.bookingUrl || `${window.location.origin}/${auth.shopSlug}`;
       urlEl.innerHTML = `<a href="${esc(url)}" target="_blank" style="color:var(--gold)">${esc(url)}</a>`;
     }
   } catch {}
