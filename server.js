@@ -51,7 +51,9 @@ app.use((req, res, next) => {
   next();
 });
 
-app.use(express.static(path.join(__dirname, 'public')));
+// index: false so express.static doesn't auto-serve index.html for '/' —
+// our explicit route below handles that with subdomain detection.
+app.use(express.static(path.join(__dirname, 'public'), { index: false }));
 
 app.use(session({
   store: new pgSession({

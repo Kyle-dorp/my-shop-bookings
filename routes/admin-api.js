@@ -336,6 +336,10 @@ router.put('/domain', async (req, res) => {
   if (domain && !/^[a-z0-9][a-z0-9.-]*\.[a-z]{2,}$/.test(domain)) {
     return res.status(400).json({ error: 'Invalid domain — use format: bookings.yourshop.com' });
   }
+  const platDomain = process.env.PLATFORM_DOMAIN;
+  if (domain && platDomain && domain.endsWith('.' + platDomain)) {
+    return res.status(400).json({ error: `That's your platform subdomain — it already works automatically. Custom domain is for your own domain like bookings.yourshop.com.` });
+  }
   try {
     await pool.query('UPDATE shops SET custom_domain=$1 WHERE id=$2', [domain || null, req.shopId]);
     res.json({ success: true, custom_domain: domain || null });
