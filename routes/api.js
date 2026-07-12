@@ -17,7 +17,7 @@ async function resolveShop(slug, host) {
       const r = await pool.query('SELECT id FROM shops WHERE custom_domain=$1', [hostname]);
       if (r.rows[0]) return r.rows[0].id;
 
-      // 2. Platform subdomain (e.g. joes.barberbook.co → slug "joes")
+      // 2. Platform subdomain (e.g. joes.appointly.cc → slug "joes")
       const platDomain = process.env.PLATFORM_DOMAIN;
       if (platDomain && hostname.endsWith('.' + platDomain)) {
         const sub = hostname.slice(0, -(platDomain.length + 1));
