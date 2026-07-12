@@ -37,7 +37,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   } else if (!data.subscriptionActive) {
     showSubscriptionRequired();
   } else {
-    showDashboard(data.shopName);
+    showDashboard(data.shopName, data.bookingUrl);
     if (didConnect) {
       switchTab('settings');
       showToast('Stripe account connected! Customer payments will go to your bank.');
@@ -61,13 +61,17 @@ function showSubscriptionRequired() {
   document.getElementById('adminShell').style.display = 'none';
 }
 
-function showDashboard(shopName) {
+function showDashboard(shopName, bookingUrl) {
   document.getElementById('loginPage').style.display = 'none';
   document.getElementById('subscriptionPage').style.display = 'none';
   document.getElementById('adminShell').style.display = 'flex';
   if (shopName) {
     const brand = document.querySelector('.brand');
     if (brand) brand.innerHTML = '&#9986; ' + esc(shopName);
+  }
+  if (bookingUrl) {
+    const link = document.getElementById('viewBookingLink');
+    if (link) link.href = bookingUrl;
   }
   switchTab('today');
 }
@@ -97,7 +101,7 @@ async function doLogin(e) {
     if (!r.ok) { errEl.textContent = d.error || 'Login failed'; errEl.style.display = 'block'; return; }
     const auth = await api('GET', '/api/admin/check-auth');
     if (auth.subscriptionActive) {
-      showDashboard(auth.shopName);
+      showDashboard(auth.shopName, auth.bookingUrl);
     } else {
       showSubscriptionRequired();
     }

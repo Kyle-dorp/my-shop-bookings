@@ -76,7 +76,10 @@
 
   <div class="admin-topbar">
     <span class="brand">&#9986; Haircut's R Us</span>
-    <button class="logout-btn" onclick="doLogout()">Log out</button>
+    <div style="display:flex;align-items:center;gap:1rem">
+      <a id="viewBookingLink" href="#" target="_blank" rel="noopener" style="font-size:.8rem;font-weight:600;color:var(--gold);text-decoration:none;white-space:nowrap">View booking page ↗</a>
+      <button class="logout-btn" onclick="doLogout()">Log out</button>
+    </div>
   </div>
 
   <div class="admin-tabs">
