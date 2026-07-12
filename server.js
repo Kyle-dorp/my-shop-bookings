@@ -139,6 +139,11 @@ app.get('/auth/google/callback', async (req, res) => {
 });
 
 app.get('/', (req, res) => {
+  const platDomain = process.env.PLATFORM_DOMAIN;
+  const hostname = req.get('host')?.split(':')[0].replace(/^www\./i, '').toLowerCase();
+  if (platDomain && hostname && hostname !== platDomain && hostname.endsWith('.' + platDomain)) {
+    return res.sendFile(path.join(__dirname, 'public', 'index.html'));
+  }
   res.sendFile(path.join(__dirname, 'public', 'landing.html'));
 });
 

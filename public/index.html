@@ -38,6 +38,13 @@
           <h2 class="auth-panel-title">Welcome back</h2>
           <p class="auth-panel-sub">Sign in to save your info, or continue as a guest</p>
 
+          <button class="guest-btn" id="guestBtn" onclick="continueAsGuest()">
+            Continue as Guest
+            <span class="guest-arrow">→</span>
+          </button>
+
+          <div class="auth-divider"><span>or</span></div>
+
           <!-- Google -->
           <button class="google-btn" id="googleBtn" disabled>
             <svg width="20" height="20" viewBox="0 0 18 18" xmlns="http://www.w3.org/2000/svg">
@@ -101,13 +108,6 @@
             <p id="regErr" class="error-msg" style="display:none"></p>
             <button class="btn btn-primary btn-block btn-lg" onclick="doRegister()">Create Account →</button>
           </div>
-
-          <div class="auth-divider"><span>or</span></div>
-
-          <button class="guest-btn" id="guestBtn" onclick="continueAsGuest()">
-            Continue as Guest
-            <span class="guest-arrow">→</span>
-          </button>
 
         </div>
       </div>
