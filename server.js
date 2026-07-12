@@ -140,6 +140,71 @@ app.get('/auth/google/callback', async (req, res) => {
   }
 });
 
+// ── Google OAuth for Managers ─────────────────────────────────────────
+app.get('/auth/google/admin', (req, res) => {
+  if (!process.env.GOOGLE_CLIENT_ID) return res.redirect('/admin?auth_error=1');
+  const baseUrl = `${req.protocol}://${req.get('host')}`;
+  const params = new URLSearchParams({
+    client_id: process.env.GOOGLE_CLIENT_ID,
+    redirect_uri: `${baseUrl}/auth/google/admin/callback`,
+    response_type: 'code',
+    scope: 'openid email profile',
+  });
+  res.redirect(`https://accounts.google.com/o/oauth2/v2/auth?${params}`);
+});
+
+app.get('/auth/google/admin/callback', async (req, res) => {
+  if (!process.env.GOOGLE_CLIENT_ID || !process.env.GOOGLE_CLIENT_SECRET) return res.redirect('/admin?auth_error=1');
+  const { code, error } = req.query;
+  if (error || !code) return res.redirect('/admin?auth_error=1');
+  try {
+    const baseUrl = `${req.protocol}://${req.get('host')}`;
+    const tokenRes = await fetch('https://oauth2.googleapis.com/token', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({
+        code, grant_type: 'authorization_code',
+        client_id: process.env.GOOGLE_CLIENT_ID,
+        client_secret: process.env.GOOGLE_CLIENT_SECRET,
+        redirect_uri: `${baseUrl}/auth/google/admin/callback`,
+      }).toString(),
+    });
+    const tokens = await tokenRes.json();
+    if (!tokens.access_token) throw new Error('No access token');
+    const profileRes = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+      headers: { Authorization: `Bearer ${tokens.access_token}` },
+    });
+    const { sub: googleId, name, email } = await profileRes.json();
+    if (!googleId) throw new Error('No Google ID');
+
+    const existing = await pool.query(
+      `SELECT a.id, a.google_id, s.id AS shop_id, s.subscription_status
+       FROM admin_users a JOIN shops s ON s.owner_id = a.id
+       WHERE a.google_id = $1 OR (a.email = $2 AND a.email IS NOT NULL)
+       LIMIT 1`,
+      [googleId, email]
+    );
+
+    if (existing.rows.length) {
+      const row = existing.rows[0];
+      if (!row.google_id) {
+        await pool.query('UPDATE admin_users SET google_id=$1 WHERE id=$2', [googleId, row.id]);
+      }
+      req.session.adminId = row.id;
+      req.session.shopId = row.shop_id;
+      req.session.subscriptionStatus = row.subscription_status;
+      return res.redirect('/admin');
+    }
+
+    // No account yet — store pending data in session, let them pick shop name/slug
+    req.session.pendingGoogleAdmin = { googleId, name, email };
+    res.redirect('/admin?google_new=1');
+  } catch (err) {
+    console.error('Admin Google OAuth error:', err);
+    res.redirect('/admin?auth_error=1');
+  }
+});
+
 app.get('/', (req, res) => {
   const platDomain = process.env.PLATFORM_DOMAIN;
   const hostname = req.get('host')?.split(':')[0].replace(/^www\./i, '').toLowerCase();

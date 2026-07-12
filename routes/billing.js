@@ -22,25 +22,36 @@ router.post('/create-checkout', requireAdmin, async (req, res) => {
     if (!rows.length) return res.status(404).json({ error: 'Shop not found' });
     const shop = rows[0];
 
-    let customerId = shop.stripe_customer_id;
-    if (!customerId) {
+    async function freshCustomer() {
       const cust = await stripe.customers.create({
         email: shop.email || undefined,
         name:  shop.name,
         metadata: { shop_id: String(shop.id) },
       });
-      customerId = cust.id;
-      await pool.query('UPDATE shops SET stripe_customer_id=$1 WHERE id=$2', [customerId, shop.id]);
+      await pool.query('UPDATE shops SET stripe_customer_id=$1 WHERE id=$2', [cust.id, shop.id]);
+      return cust.id;
     }
 
-    const base    = `${req.protocol}://${req.get('host')}`;
-    const session = await stripe.checkout.sessions.create({
-      customer:    customerId,
-      mode:        'subscription',
-      line_items:  [{ price: process.env.STRIPE_MONTHLY_PRICE_ID, quantity: 1 }],
+    let customerId = shop.stripe_customer_id || await freshCustomer();
+    const base = `${req.protocol}://${req.get('host')}`;
+    const checkoutParams = {
+      customer:   customerId,
+      mode:       'subscription',
+      line_items: [{ price: process.env.STRIPE_MONTHLY_PRICE_ID, quantity: 1 }],
       success_url: `${base}/admin?subscribed=1`,
       cancel_url:  `${base}/admin`,
-    });
+    };
+
+    let session;
+    try {
+      session = await stripe.checkout.sessions.create(checkoutParams);
+    } catch (err) {
+      if (err.code === 'resource_missing') {
+        // Stale customer ID (e.g. switched Stripe mode) — auto-heal
+        customerId = await freshCustomer();
+        session = await stripe.checkout.sessions.create({ ...checkoutParams, customer: customerId });
+      } else { throw err; }
+    }
     res.json({ url: session.url });
   } catch (err) {
     console.error('Checkout error:', err);

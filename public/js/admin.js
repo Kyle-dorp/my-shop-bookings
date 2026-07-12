@@ -33,6 +33,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (urlParams.get('register') === '1') {
       history.replaceState({}, '', '/admin');
       loginTab('register');
+    } else if (urlParams.get('google_new') === '1') {
+      history.replaceState({}, '', '/admin');
+      showGoogleNewPane();
+    } else if (urlParams.get('auth_error') === '1') {
+      history.replaceState({}, '', '/admin');
+      document.getElementById('loginErr').textContent = 'Google sign-in failed. Please try again.';
+      document.getElementById('loginErr').style.display = '';
     }
   } else if (!data.subscriptionActive) {
     showSubscriptionRequired();
@@ -76,10 +83,42 @@ function showDashboard(shopName, bookingUrl) {
   switchTab('today');
 }
 
+function showGoogleNewPane() {
+  document.getElementById('loginPage').style.display = '';
+  document.getElementById('signinPane').style.display = 'none';
+  document.getElementById('registerPane').style.display = 'none';
+  document.getElementById('googleNewPane').style.display = '';
+  document.querySelector('.login-tabs').style.display = 'none';
+  const shopInput = document.getElementById('gNewShopName');
+  if (shopInput) {
+    shopInput.addEventListener('input', function() {
+      document.getElementById('gNewSlug').value = this.value
+        .toLowerCase().replace(/[^a-z0-9\s-]/g,'').replace(/\s+/g,'-').replace(/-+/g,'-').replace(/^-+|-+$/g,'').slice(0,40);
+    });
+  }
+}
+
+async function doGoogleRegister() {
+  const shopName = document.getElementById('gNewShopName').value.trim();
+  const slug     = document.getElementById('gNewSlug').value.trim();
+  const errEl    = document.getElementById('googleNewErr');
+  errEl.style.display = 'none';
+  if (!shopName || !slug) { errEl.textContent = 'Shop name and URL are required'; errEl.style.display = ''; return; }
+  try {
+    await api('POST', '/api/admin/register-google', { shopName, slug });
+    showSubscriptionRequired();
+  } catch (err) {
+    errEl.textContent = err.message || 'Error creating shop';
+    errEl.style.display = '';
+  }
+}
+
 function loginTab(tab) {
   const isSignIn = tab === 'signin';
   document.getElementById('tabSignIn').classList.toggle('active', isSignIn);
   document.getElementById('tabRegister').classList.toggle('active', !isSignIn);
+  document.getElementById('googleNewPane').style.display = 'none';
+  document.querySelector('.login-tabs').style.display = '';
   document.getElementById('signinPane').style.display = isSignIn ? '' : 'none';
   document.getElementById('registerPane').style.display = isSignIn ? 'none' : '';
 }

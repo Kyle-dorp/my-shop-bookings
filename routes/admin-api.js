@@ -21,6 +21,7 @@ router.post('/login', async (req, res) => {
         [email.toLowerCase().trim()]
       );
       if (!r.rows.length) return res.status(401).json({ error: 'Invalid email or password' });
+      if (!r.rows[0].password_hash) return res.status(401).json({ error: 'This account uses Google sign-in — use the Google button below.' });
       const ok = await bcrypt.compare(password, r.rows[0].password_hash);
       if (!ok) return res.status(401).json({ error: 'Invalid email or password' });
       req.session.adminId            = r.rows[0].id;
@@ -97,6 +98,55 @@ router.post('/register', async (req, res) => {
   } catch (err) {
     await client.query('ROLLBACK');
     console.error('Registration error:', err);
+    res.status(500).json({ error: err.message });
+  } finally { client.release(); }
+});
+
+// POST /api/admin/register-google
+router.post('/register-google', async (req, res) => {
+  const pending = req.session?.pendingGoogleAdmin;
+  if (!pending?.googleId) return res.status(400).json({ error: 'No pending Google sign-up. Please try again.' });
+  const { shopName, slug } = req.body;
+  if (!shopName || !slug) return res.status(400).json({ error: 'All fields required' });
+  const slugClean = slug.toLowerCase().replace(/[^a-z0-9-]/g, '').replace(/^-+|-+$/g, '').slice(0, 40);
+  if (!slugClean || slugClean.length < 2) return res.status(400).json({ error: 'URL must be at least 2 characters' });
+  if (RESERVED.has(slugClean)) return res.status(400).json({ error: 'That URL is reserved. Please choose another.' });
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    if (pending.email) {
+      const existingEmail = await client.query('SELECT id FROM admin_users WHERE email=$1', [pending.email]);
+      if (existingEmail.rows.length) { await client.query('ROLLBACK'); return res.status(400).json({ error: 'An account with this Google email already exists. Sign in instead.' }); }
+    }
+    const existingSlug = await client.query('SELECT id FROM shops WHERE slug=$1', [slugClean]);
+    if (existingSlug.rows.length) { await client.query('ROLLBACK'); return res.status(400).json({ error: 'That booking URL is taken. Please choose another.' }); }
+    const adminR = await client.query(
+      'INSERT INTO admin_users (email, google_id, name) VALUES ($1,$2,$3) RETURNING id',
+      [pending.email || null, pending.googleId, (shopName || pending.name || 'Manager').trim()]
+    );
+    const adminId = adminR.rows[0].id;
+    const shopR = await client.query(
+      'INSERT INTO shops (owner_id, name, slug, subscription_status) VALUES ($1,$2,$3,$4) RETURNING id',
+      [adminId, shopName.trim(), slugClean, 'inactive']
+    );
+    const shopId = shopR.rows[0].id;
+    const hrs = [[0,'10:00','16:00',true],[1,'09:00','18:00',false],[2,'09:00','18:00',false],[3,'09:00','18:00',false],[4,'09:00','18:00',false],[5,'09:00','18:00',false],[6,'09:00','16:00',false]];
+    for (const [d,o,c,closed] of hrs) {
+      await client.query('INSERT INTO business_hours (shop_id, day_of_week, open_time, close_time, is_closed) VALUES ($1,$2,$3,$4,$5)', [shopId, d, o, c, closed]);
+    }
+    const defs = [['max_booking_days','60'],['payment_mode','in_person'],['deposit_required','false'],['deposit_amount','10'],['require_login','false'],['allow_guest','true']];
+    for (const [k,v] of defs) {
+      await client.query('INSERT INTO settings (shop_id, key, value) VALUES ($1,$2,$3)', [shopId, k, v]);
+    }
+    await client.query('COMMIT');
+    delete req.session.pendingGoogleAdmin;
+    req.session.adminId = adminId;
+    req.session.shopId = shopId;
+    req.session.subscriptionStatus = 'inactive';
+    res.json({ success: true, shopId, slug: slugClean });
+  } catch (err) {
+    await client.query('ROLLBACK');
+    console.error('Google registration error:', err);
     res.status(500).json({ error: err.message });
   } finally { client.release(); }
 });

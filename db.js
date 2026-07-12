@@ -138,6 +138,19 @@ async function initDB() {
     await client.query(`ALTER TABLE admin_users ADD COLUMN IF NOT EXISTS name VARCHAR(100) DEFAULT 'Admin'`);
     await client.query(`ALTER TABLE admin_users ADD COLUMN IF NOT EXISTS email VARCHAR(100)`);
     await client.query(`ALTER TABLE admin_users ADD COLUMN IF NOT EXISTS phone VARCHAR(20)`);
+    await client.query(`ALTER TABLE admin_users ADD COLUMN IF NOT EXISTS google_id VARCHAR(100)`);
+    await client.query(`
+      DO $$ BEGIN
+        BEGIN ALTER TABLE admin_users ADD CONSTRAINT admin_users_google_id_key UNIQUE (google_id);
+        EXCEPTION WHEN OTHERS THEN NULL; END;
+      END $$
+    `);
+    await client.query(`
+      DO $$ BEGIN
+        BEGIN ALTER TABLE admin_users ALTER COLUMN password_hash DROP NOT NULL;
+        EXCEPTION WHEN OTHERS THEN NULL; END;
+      END $$
+    `);
     await client.query(`ALTER TABLE appointments ADD COLUMN IF NOT EXISTS payment_intent_id VARCHAR(100)`);
     await client.query(`ALTER TABLE appointments ADD COLUMN IF NOT EXISTS user_id INTEGER`);
     await client.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS google_id VARCHAR(100)`);
