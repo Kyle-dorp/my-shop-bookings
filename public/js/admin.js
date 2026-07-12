@@ -30,6 +30,10 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   if (!data.authenticated) {
     showLogin();
+    if (urlParams.get('register') === '1') {
+      history.replaceState({}, '', '/admin');
+      loginTab('register');
+    }
   } else if (!data.subscriptionActive) {
     showSubscriptionRequired();
   } else {
